@@ -5,8 +5,8 @@ import { Analytics } from "@vercel/analytics/react"
 
 
 export const metadata: Metadata = {
-  title: "Curious Frame",
-  description: "Curious Frame by Curious Learning",
+  title: "CL Synapse",
+  description: "Synapse by Curious Learning",
 };
 
 export default function RootLayout({
