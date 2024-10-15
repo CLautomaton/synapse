@@ -78,6 +78,41 @@ export default function AdminPanel({ version, entries: initialEntries }: Props) 
 
   const saveFlow = async () => {
     if (!updatedFlow) return;
+
+    if (updatedFlow.id.trim() === "") {
+      alert("Flow ID is required. Please enter a valid ID.");
+      return;
+    }
+
+    // Check if the flow ID already exists
+    const existingFlows = await fetch("/api/flows/get-flows");
+    if (existingFlows.ok) {
+      const existingFlowsData = await existingFlows.json();
+      const flowExists = existingFlowsData.flows.some((flow: AppFlowEntry) => flow.id === updatedFlow.id);
+      if (flowExists) {
+        alert("A flow with this ID already exists. Please choose a different ID.");
+        return;
+      }
+    } else {
+      console.error("Failed to fetch existing flows");
+      alert("Unable to verify flow ID uniqueness. Please try again later.");
+      return;
+    }
+
+    // Ensure the flow ID is Firebase-safe
+    const sanitizedFlowId = updatedFlow.id.replace(/[^a-zA-Z0-9-_]/g, '');
+    if (sanitizedFlowId !== updatedFlow.id) {
+      alert("The flow ID has been sanitized to ensure it's Firebase-safe. It now contains only letters, numbers, dashes, and underscores.");
+      setUpdatedFlow({ ...updatedFlow, id: sanitizedFlowId });
+      return;
+    }
+
+    // Check if the sanitized ID is empty
+    if (sanitizedFlowId.trim() === "") {
+      alert("Flow ID is required and must contain at least one valid character (letter, number, dash, or underscore).");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -198,7 +233,7 @@ export default function AdminPanel({ version, entries: initialEntries }: Props) 
       sidebar={
         <div className="flex flex-col h-screen justify-center">
           <div className="flex-grow">
-            <h1 className="text-md font-bold mb-6">Content Mover Dashboard</h1>
+            <h1 className="text-md font-bold mb-6">Synapse Dashboard</h1>
             {session && (
               <div className="mb-6 p-2 bg-white shadow-lg rounded-lg border border-gray-200">
                 <div className="flex items-center justify-center flex-col">
@@ -223,7 +258,7 @@ export default function AdminPanel({ version, entries: initialEntries }: Props) 
               </Link>
             </nav>
           </div>
-          <div className="mb-12 flex flex-col items-center justify-center">
+          <div className="flex flex-col items-center justify-center">
             <button
               onClick={() => logOut()}
               className="py-2 px-4 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors duration-300"
@@ -274,7 +309,7 @@ export default function AdminPanel({ version, entries: initialEntries }: Props) 
                           >
                             <span className="relative px-3 py-1 text-sm font-medium transition-all duration-300 group-hover:text-white">
                               {new URL(nextEntry.url).hostname}
-                            </span><br/>
+                            </span><br />
                             {new URL(nextEntry.url).searchParams.toString() && (
                               <span className="relative px-3 py-1 text-sm font-medium transition-all duration-300 group-hover:text-white">
                                 {Array.from(new URL(nextEntry.url).searchParams.entries()).map(([key, value], index) => (
@@ -357,12 +392,14 @@ export default function AdminPanel({ version, entries: initialEntries }: Props) 
               >
                 <div>
                   <label htmlFor="flowId" className="block text-lg font-medium text-gray-700 mb-2">
-                    App Flow ID (Unique, used as a <b>/flow</b> route)
+                    App Flow ID (Unique, used as a <b>/flow</b> route) 
+                    <span className="text-amber-700 text-sm">*required</span>
                   </label>
                   <input
                     type="text"
                     id="flowId"
                     value={updatedFlow?.id}
+                    placeholder="App-Flow-Id"
                     onChange={(e) => handleFlowIdChange(e.target.value)}
                     className="w-full px-4 py-3 bg-gray-100 text-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-300"
                     required
@@ -373,6 +410,9 @@ export default function AdminPanel({ version, entries: initialEntries }: Props) 
                     <div key={index} className="bg-gray-50 p-6 rounded-lg border border-gray-200 relative">
                       <h3 className="text-xl font-semibold mb-4 text-indigo-600">Entry {index + 1}</h3>
                       <div className="space-y-4">
+                        <label htmlFor={`url-${index}`} className="block text-sm font-medium text-gray-700">
+                          URL
+                        </label>
                         <input
                           type="url"
                           value={nextEntry.url}
@@ -381,6 +421,9 @@ export default function AdminPanel({ version, entries: initialEntries }: Props) 
                           className="w-full px-4 py-3 bg-white text-gray-800 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-300"
                           required
                         />
+                        <label htmlFor={`conditional-${index}`} className="block text-sm font-medium text-gray-700">
+                          Conditional
+                        </label>
                         <input
                           type="number"
                           value={nextEntry.conditional}
@@ -400,9 +443,8 @@ export default function AdminPanel({ version, entries: initialEntries }: Props) 
                               />
                               <div className="w-12 h-6 bg-gray-300 rounded-full shadow-inner">
                                 <div
-                                  className={`absolute left-0 w-6 h-6 rounded-full shadow transform transition-transform duration-300 ease-in-out ${
-                                    nextEntry.redirect ? "translate-x-6 bg-indigo-500" : "translate-x-0 bg-white"
-                                  }`}
+                                  className={`absolute left-0 w-6 h-6 rounded-full shadow transform transition-transform duration-300 ease-in-out ${nextEntry.redirect ? "translate-x-6 bg-indigo-500" : "translate-x-0 bg-white"
+                                    }`}
                                 ></div>
                               </div>
                             </div>
