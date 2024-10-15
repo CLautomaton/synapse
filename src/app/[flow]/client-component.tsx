@@ -9,7 +9,14 @@ export interface ClientProps {
 }
 
 export default function Home({ selectedEntry, initialURL }: ClientProps) {
-  const [currentlyOpenAssessmentURL, setCurrentlyOpenAssessmentURL] = useState<string | null>(initialURL);
+  const [currentlyOpenAssessmentURL, setCurrentlyOpenAssessmentURL] = useState<string | null>(() => {
+    const url = new URL(initialURL, window.location.href);
+    const currentParams = new URLSearchParams(window.location.search);
+    currentParams.forEach((value, key) => {
+      url.searchParams.set(key, value);
+    });
+    return url.toString();
+  });
   const currentURLIndex = useRef<number>(0);
 
   console.log('Selected Entry', selectedEntry);
@@ -36,7 +43,12 @@ export default function Home({ selectedEntry, initialURL }: ClientProps) {
             if (redirect) {
               window.location.href = nextURL!;
             } else {
-              setCurrentlyOpenAssessmentURL(nextURL);
+              const url = new URL(nextURL, window.location.href);
+              const currentParams = new URLSearchParams(window.location.search);
+              currentParams.forEach((value, key) => {
+                url.searchParams.set(key, value);
+              });
+              setCurrentlyOpenAssessmentURL(url.toString());
             }
           }
         }
