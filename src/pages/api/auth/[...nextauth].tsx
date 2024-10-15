@@ -30,7 +30,7 @@ export const authOptions: AuthOptions = {
         console.log('Credentials', credentials);
         // Replace this with your authentication logic
         if (credentials?.username === process.env.ADMIN_USERNAME && credentials?.password === process.env.ADMIN_PASSWORD) {
-          return { id: '1', name: 'Curious Frame Admin', email: 'crframeadmin@curiouslearning.org' };
+          return { id: '1', name: 'Curious Frame Admin', email: 'automaton@curiouslearning.org' };
         }
         return null;
       }
