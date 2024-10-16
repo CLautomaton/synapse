@@ -85,18 +85,20 @@ export default function AdminPanel({ version, entries: initialEntries }: Props) 
     }
 
     // Check if the flow ID already exists
-    const existingFlows = await fetch("/api/flows/get-flows");
-    if (existingFlows.ok) {
-      const existingFlowsData = await existingFlows.json();
-      const flowExists = existingFlowsData.flows.some((flow: AppFlowEntry) => flow.id === updatedFlow.id);
-      if (flowExists) {
-        alert("A flow with this ID already exists. Please choose a different ID.");
+    if (!isEditing) {
+      const existingFlows = await fetch("/api/flows/get-flows");
+      if (existingFlows.ok) {
+        const existingFlowsData = await existingFlows.json();
+        const flowExists = existingFlowsData.flows.some((flow: AppFlowEntry) => flow.id === updatedFlow.id);
+        if (flowExists) {
+          alert("A flow with this ID already exists. Please choose a different ID.");
+          return;
+        }
+      } else {
+        console.error("Failed to fetch existing flows");
+        alert("Unable to verify flow ID uniqueness. Please try again later.");
         return;
       }
-    } else {
-      console.error("Failed to fetch existing flows");
-      alert("Unable to verify flow ID uniqueness. Please try again later.");
-      return;
     }
 
     // Ensure the flow ID is Firebase-safe
@@ -392,7 +394,7 @@ export default function AdminPanel({ version, entries: initialEntries }: Props) 
               >
                 <div>
                   <label htmlFor="flowId" className="block text-lg font-medium text-gray-700 mb-2">
-                    App Flow ID (Unique, used as a <b>/flow</b> route) 
+                    App Flow ID (Unique, used as a <b>/flow</b> route)
                     <span className="text-amber-700 text-sm">*required</span>
                   </label>
                   <input
