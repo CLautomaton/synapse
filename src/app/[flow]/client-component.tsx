@@ -25,7 +25,7 @@ export default function Home({ selectedEntry, initialURL }: ClientProps) {
   useEffect(() => {
     const handleMessage = (event: any) => {
       console.log('Message Received', event);
-      if (event.origin !== 'https://assessmentdev.curiouscontent.org') {
+      if (event.origin !== 'https://assessmentdev.curiouscontent.org' && event.origin !== 'https://assessment.curiouscontent.org') {
         return;
       }
       const { type, score } = event.data;
