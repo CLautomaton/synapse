@@ -1,0 +1,21 @@
+{
+  "name": "CL Synapse",
+  "short_name": "Synapse",
+  "description": "Synapse by Curious Learning",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "icons": [
+    {
+      "src": "/next.svg",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/next.svg",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
