@@ -14,7 +14,7 @@ const withPWA = require('@ducanh2912/next-pwa').default({
   forcePrecache: true,
   runtimeCaching: [
     {
-      urlPattern: /^https?:\/\/synapse\.curiouscontent\.org\/[^/]+\/?$/i,
+      urlPattern: /^https?:\/\/synapse\.curiouscontent\.org\/app\/[^/]+\/?$/i,
       handler: 'NetworkFirst',
       options: {
         cacheName: 'dynamic-routes-cache',
@@ -31,7 +31,7 @@ const withPWA = require('@ducanh2912/next-pwa').default({
           {
             cacheKeyWillBeUsed: async ({request}) => {
               const url = new URL(request.url);
-              const paramsToRemove = ['cr_user_id'];
+              const paramsToRemove = ['cr_user_id', 'endpoint'];
               paramsToRemove.forEach(param => {
                 url.searchParams.delete(param);
               });
