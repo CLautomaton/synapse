@@ -9,18 +9,18 @@ export interface ClientProps {
 }
 
 export default function Home({ selectedEntry, initialURL }: ClientProps) {
-  const [currentlyOpenAssessmentURL, setCurrentlyOpenAssessmentURL] = useState<string | null>(() => {
+  const [currentlyOpenAssessmentURL, setCurrentlyOpenAssessmentURL] = useState<string | null>(null);
+  const currentURLIndex = useRef<number>(0);
+
+  useEffect(() => {
+    // Calculate the initial URL on the client side
     const url = new URL(initialURL, window.location.href);
     const currentParams = new URLSearchParams(window.location.search);
     currentParams.forEach((value, key) => {
       url.searchParams.set(key, value);
     });
-    return url.toString();
-  });
-  const currentURLIndex = useRef<number>(0);
-
-  console.log('Selected Entry', selectedEntry);
-  console.log('Initial URL', initialURL);
+    setCurrentlyOpenAssessmentURL(url.toString());
+  }, [initialURL]);
 
   useEffect(() => {
     const handleMessage = (event: any) => {
@@ -34,14 +34,15 @@ export default function Home({ selectedEntry, initialURL }: ClientProps) {
       console.log('Conditional', selectedEntry.flow[currentURLIndex.current + 1].conditional);
 
       if (currentURLIndex.current + 1 < selectedEntry.flow.length) {
-        // We are going to check if the condition is met for the next url if it exists, if not do nothing
+        // Check if the condition is met for the next URL
         if (score > selectedEntry.flow[currentURLIndex.current + 1].conditional) {
           currentURLIndex.current = currentURLIndex.current + 1; // Move to the next entry
-          const nextURL = selectedEntry.flow[currentURLIndex.current]?.url; // Assuming next entry is at index 1
-          const redirect = selectedEntry.flow[currentURLIndex.current]?.redirect; // Check if the next entry is a redirect or not
+          const nextURL = selectedEntry.flow[currentURLIndex.current]?.url;
+          const redirect = selectedEntry.flow[currentURLIndex.current]?.redirect;
+
           if (nextURL) {
             if (redirect) {
-              window.location.href = nextURL!;
+              window.location.href = nextURL;
             } else {
               const url = new URL(nextURL, window.location.href);
               const currentParams = new URLSearchParams(window.location.search);
@@ -56,7 +57,6 @@ export default function Home({ selectedEntry, initialURL }: ClientProps) {
     };
 
     window.addEventListener('message', handleMessage);
-
     return () => {
       window.removeEventListener('message', handleMessage);
     };
@@ -64,11 +64,11 @@ export default function Home({ selectedEntry, initialURL }: ClientProps) {
 
   return (
     <main className="flex min-h-screen bg-[#3d85d1]">
-      {
-        currentlyOpenAssessmentURL?.includes('google') ? ( "Redirecting to play store..." ) : (
-          <iframe src={currentlyOpenAssessmentURL!} className="min-w-full min-h-full" />
-        )
-      }
+      {currentlyOpenAssessmentURL?.includes('google') ? (
+        "Redirecting to play store..."
+      ) : (
+        <iframe src={currentlyOpenAssessmentURL!} className="min-w-full min-h-full" />
+      )}
     </main>
   );
 }
