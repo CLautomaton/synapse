@@ -14,7 +14,7 @@ const withPWA = require('@ducanh2912/next-pwa').default({
   forcePrecache: true,
   runtimeCaching: [
     {
-      urlPattern: /^https?:\/\/synapse\.curiouscontent\.org\/app\/[^/]+\/?$/i,
+      urlPattern: /^https?:\/\/synapse\.curiouscontent\.org\/[^/]+\/?$/i,
       handler: 'NetworkFirst',
       options: {
         cacheName: 'dynamic-routes-cache',
