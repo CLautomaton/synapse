@@ -53,9 +53,11 @@ const FullscreenComponent: React.FC<FullscreenComponentProps & { onImageClick: (
   return (
     <div className="flex flex-col items-center justify-center h-screen w-screen">
       <h1 className="text-3xl font-bold text-gray-800 mb-5">{title}</h1>
-      <div className="flex flex-col w-2/12 p-5 gap-10">
+      <div className="flex flex-col w-6/12 p-5 gap-10">
         {apps.map((app, index) => (
-          <img className="border-4 border-transparent border-r-indigo-500 border-b-purple-500" key={index} src={app.imageURL} alt={app.id} onClick={() => onImageClick(app.url)} />
+          <button key={index} onClick={() => onImageClick(app.url)}>
+            <img className="border-4 border-transparent border-r-indigo-500 border-b-purple-500" src={app.imageURL} alt={app.id} />
+          </button>
         ))}
       </div>
     </div>
@@ -66,7 +68,7 @@ export default function Home({ selectedEntry, initialURL }: ClientProps) {
   const [currentlyOpenAssessmentURL, setCurrentlyOpenAssessmentURL] = useState<string | null>(null);
   const currentURLIndex = useRef<number>(0);
 
-  const [appDisplayActive, setAppDisplayActive] = useState<boolean>(false);
+  const [appDisplayActive, setAppDisplayActive] = useState<boolean>(true);
   const [appIdsToDisplay, setAppIdsToDisplay] = useState<string[]>(['frog', 'market']);
   const [appDisplayTitle, setAppDisplayTitle] = useState<string>('Sounds');
 
@@ -137,7 +139,7 @@ export default function Home({ selectedEntry, initialURL }: ClientProps) {
     <main className="flex min-h-screen bg-[#3d85d1]">
 
       {appDisplayActive ? (
-        <FullscreenComponent title={appDisplayTitle} appsIds={appIdsToDisplay} onImageClick={(url) => handleAppClick} />
+        <FullscreenComponent title={appDisplayTitle} appsIds={appIdsToDisplay} onImageClick={(url) => handleAppClick(url)} />
       ) : currentlyOpenAssessmentURL?.includes('google') ? (
         "Redirecting to play store..."
       ) : (
