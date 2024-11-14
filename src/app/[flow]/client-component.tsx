@@ -68,7 +68,7 @@ export default function Home({ selectedEntry, initialURL }: ClientProps) {
   const [currentlyOpenAssessmentURL, setCurrentlyOpenAssessmentURL] = useState<string | null>(null);
   const currentURLIndex = useRef<number>(0);
 
-  const [appDisplayActive, setAppDisplayActive] = useState<boolean>(true);
+  const [appDisplayActive, setAppDisplayActive] = useState<boolean>(false);
   const [appIdsToDisplay, setAppIdsToDisplay] = useState<string[]>(['frog', 'market']);
   const [appDisplayTitle, setAppDisplayTitle] = useState<string>('Sounds');
 
