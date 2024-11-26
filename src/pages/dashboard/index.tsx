@@ -7,7 +7,7 @@ import getVersion from "@/utils/get-version";
 import fs from "fs";
 import path from "path";
 import Modal from "react-modal";
-import { ArrowRightLeft, Edit, ExternalLink, Frame, Plus, Save, Trash2, X } from "lucide-react";
+import { ArrowRightLeft, Boxes, Edit, ExternalLink, Frame, Plus, Save, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { adminDB } from "@/config/firebaseAdmin";
@@ -33,6 +33,15 @@ interface Props {
   version: string;
 }
 
+const DashboardAppFlows: React.FC<LayoutProps> = ({ children }) => {
+  return (
+    <div className="space-y-6">
+      <h2 className="text-3xl font-semibold">App Flows</h2>
+      {children}
+    </div>
+  );
+};
+
 export default function AdminPanel({ version, entries: initialEntries }: Props) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentFlow, setCurrentFlow] = useState<AppFlowEntry | null>(null);
@@ -46,6 +55,10 @@ export default function AdminPanel({ version, entries: initialEntries }: Props) 
   const { data: session, status } = useSession();
   const router = useRouter();
   const isActive = router.pathname === "/dashboard";
+
+  const [currentlyToggledMainContent, setCurrentlyToggledMainContent] = useState<"app-flows" | "cl-content">(
+    "app-flows"
+  );
 
   if (status === "loading") {
     return <p>Loading...</p>;
@@ -102,9 +115,11 @@ export default function AdminPanel({ version, entries: initialEntries }: Props) 
     }
 
     // Ensure the flow ID is Firebase-safe
-    const sanitizedFlowId = updatedFlow.id.replace(/[^a-zA-Z0-9-_]/g, '');
+    const sanitizedFlowId = updatedFlow.id.replace(/[^a-zA-Z0-9-_]/g, "");
     if (sanitizedFlowId !== updatedFlow.id) {
-      alert("The flow ID has been sanitized to ensure it's Firebase-safe. It now contains only letters, numbers, dashes, and underscores.");
+      alert(
+        "The flow ID has been sanitized to ensure it's Firebase-safe. It now contains only letters, numbers, dashes, and underscores."
+      );
       setUpdatedFlow({ ...updatedFlow, id: sanitizedFlowId });
       return;
     }
@@ -192,9 +207,8 @@ export default function AdminPanel({ version, entries: initialEntries }: Props) 
     }
   };
 
-
   const handleEditToggle = (id: string) => {
-    const flowToEdit = entries.find(entry => entry.id === id);
+    const flowToEdit = entries.find((entry) => entry.id === id);
     if (flowToEdit) {
       setUpdatedFlow(flowToEdit);
     } else {
@@ -203,7 +217,6 @@ export default function AdminPanel({ version, entries: initialEntries }: Props) 
     setIsEditing(true);
     setIsModalOpen(true);
   };
-
 
   // Existing saveFlow function will be used for both adding and editing
 
@@ -230,6 +243,10 @@ export default function AdminPanel({ version, entries: initialEntries }: Props) 
     }
   };
 
+  const toggleMainContent = (content: string) => {
+    setCurrentlyToggledMainContent(content as "app-flows" | "cl-content");
+  };
+
   return (
     <SideBarLayout
       sidebar={
@@ -252,10 +269,32 @@ export default function AdminPanel({ version, entries: initialEntries }: Props) 
               </div>
             )}
             <nav>
-              <Link href="/dashboard" className={`block py-2 px-4 rounded ${isActive ? "bg-gray-700" : ""}`}>
+              <Link
+                href=""
+                onClick={() => {
+                  toggleMainContent("app-flows");
+                }}
+                className={`block py-2 mb-2 px-3 rounded ${
+                  currentlyToggledMainContent === "app-flows" ? "bg-gray-500" : "bg-gray-700"
+                }`}
+              >
                 <div className="flex items-center">
                   <ArrowRightLeft size={20} className="mr-2" />
-                  <span>App Flows</span>
+                  <span className="text-sm">App Flows</span>
+                </div>
+              </Link>
+              <Link
+                href=""
+                onClick={() => {
+                  toggleMainContent("cl-content");
+                }}
+                className={`block py-2 mb-2 px-3 rounded ${
+                  currentlyToggledMainContent === "cl-content" ? "bg-gray-500" : "bg-gray-700"
+                }`}
+              >
+                <div className="flex items-center">
+                  <Boxes size={20} className="mr-2" />
+                  <span className="text-sm">CL Content</span>
                 </div>
               </Link>
             </nav>
@@ -272,241 +311,342 @@ export default function AdminPanel({ version, entries: initialEntries }: Props) 
         </div>
       }
       main={
-        <div className="space-y-6">
-          <h2 className="text-3xl font-semibold">App Flows</h2>
-          <div className="bg-white shadow-md rounded-lg p-6">
-            <h3 className="text-2xl font-semibold mb-4">Entries</h3>
-            <ul className="space-y-4">
-              {entries!.map((entry) => (
-                <li key={entry.id} className="border p-4 rounded-lg relative">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center bg-gray-100 rounded-lg p-2">
-                      <p className="flex-grow">
-                        <strong>App Flow:</strong> {entry.id}
-                      </p>
+        currentlyToggledMainContent === "app-flows" ? (
+          <div className="space-y-6">
+            <h2 className="text-3xl font-semibold">App Flows</h2>
+            <div className="bg-white shadow-md rounded-lg p-6">
+              <h3 className="text-2xl font-semibold mb-4">Entries</h3>
+              <ul className="space-y-4">
+                {entries!.map((entry) => (
+                  <li key={entry.id} className="border p-4 rounded-lg relative">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center bg-gray-100 rounded-lg p-2">
+                        <p className="flex-grow">
+                          <strong>App Flow:</strong> {entry.id}
+                        </p>
+                        <button
+                          onClick={() => navigator.clipboard.writeText(`${window.location.origin}/${entry.id}`)}
+                          className="ml-2 p-1 bg-gray-200 rounded hover:bg-gray-300 transition-colors duration-200"
+                          title="Copy App Flow URL"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-5 w-5"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                          >
+                            <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
+                            <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                    <div>
+                      <ul className="mt-2 space-y-2">
+                        {entry.flow.map((nextEntry, index) => (
+                          <li key={index} className="border border-gray-300 p-2 rounded-lg shadow-sm">
+                            <p>
+                              <strong className="text-gray-500">URL</strong>
+                            </p>
+                            <a
+                              href={nextEntry.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="group relative inline-flex items-center overflow-hidden rounded-md bg-gradient-to-r from-blue-500 to-purple-600 p-1 text-white transition-all duration-300 hover:bg-gradient-to-r hover:from-blue-600 hover:to-purple-700 hover:shadow-lg"
+                            >
+                              <span className="relative px-3 py-1 text-sm font-medium transition-all duration-300 group-hover:text-white">
+                                {new URL(nextEntry.url).hostname}
+                              </span>
+                              <br />
+                              {new URL(nextEntry.url).searchParams.toString() && (
+                                <span className="relative px-3 py-1 text-sm font-medium transition-all duration-300 group-hover:text-white">
+                                  {Array.from(new URL(nextEntry.url).searchParams.entries()).map(
+                                    ([key, value], index) => (
+                                      <span key={index} className="mx-1">
+                                        {key}={value}
+                                      </span>
+                                    )
+                                  )}
+                                </span>
+                              )}
+                              <span className="relative ml-1 mr-1">
+                                {nextEntry.redirect ? (
+                                  <ExternalLink
+                                    size={14}
+                                    className="transition-all duration-300 group-hover:text-white"
+                                  />
+                                ) : (
+                                  <Frame size={14} className="transition-all duration-300 group-hover:text-white" />
+                                )}
+                              </span>
+                            </a>
+                            <p className="mt-2">
+                              <strong className="text-gray-500">Conditional</strong>
+                            </p>
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-500 text-white">
+                              {nextEntry.conditional}
+                              <ArrowRightLeft className="w-4 h-4 ml-2" />
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    {/* Edit and Delete buttons */}
+                    <div className="absolute top-2 right-2 flex space-x-2">
                       <button
-                        onClick={() => navigator.clipboard.writeText(`${window.location.origin}/${entry.id}`)}
-                        className="ml-2 p-1 bg-gray-200 rounded hover:bg-gray-300 transition-colors duration-200"
-                        title="Copy App Flow URL"
+                        onClick={() => handleEditToggle(entry.id)}
+                        className="p-2 text-yellow-500 border-2 border-yellow-500 rounded-full hover:bg-yellow-500 hover:text-white transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50 transform hover:scale-110"
+                        aria-label="Edit"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
-                          <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
-                        </svg>
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => deleteFlow(entry.id)}
+                        className="p-2 text-red-500 border-2 border-red-500 rounded-full hover:bg-red-500 hover:text-white transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transform hover:scale-110"
+                        aria-label="Delete"
+                      >
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
-                  </div>
-                  <div>
-                    <ul className="mt-2 space-y-2">
-                      {entry.flow.map((nextEntry, index) => (
-                        <li key={index} className="border border-gray-300 p-2 rounded-lg shadow-sm">
-                          <p>
-                            <strong className="text-gray-500">URL</strong>
-                          </p>
-                          <a
-                            href={nextEntry.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="group relative inline-flex items-center overflow-hidden rounded-md bg-gradient-to-r from-blue-500 to-purple-600 p-1 text-white transition-all duration-300 hover:bg-gradient-to-r hover:from-blue-600 hover:to-purple-700 hover:shadow-lg"
-                          >
-                            <span className="relative px-3 py-1 text-sm font-medium transition-all duration-300 group-hover:text-white">
-                              {new URL(nextEntry.url).hostname}
-                            </span><br />
-                            {new URL(nextEntry.url).searchParams.toString() && (
-                              <span className="relative px-3 py-1 text-sm font-medium transition-all duration-300 group-hover:text-white">
-                                {Array.from(new URL(nextEntry.url).searchParams.entries()).map(([key, value], index) => (
-                                  <span key={index} className="mx-1">
-                                    {key}={value}
-                                  </span>
-                                ))}
-                              </span>
-                            )}
-                            <span className="relative ml-1 mr-1">
-                              {nextEntry.redirect ? (
-                                <ExternalLink
-                                  size={14}
-                                  className="transition-all duration-300 group-hover:text-white"
-                                />
-                              ) : (
-                                <Frame size={14} className="transition-all duration-300 group-hover:text-white" />
-                              )}
-                            </span>
-                          </a>
-                          <p className="mt-2">
-                            <strong className="text-gray-500">Conditional</strong>
-                          </p>
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-500 text-white">
-                            {nextEntry.conditional}
-                            <ArrowRightLeft className="w-4 h-4 ml-2" />
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  {/* Edit and Delete buttons */}
-                  <div className="absolute top-2 right-2 flex space-x-2">
-                    <button
-                      onClick={() => handleEditToggle(entry.id)}
-                      className="p-2 text-yellow-500 border-2 border-yellow-500 rounded-full hover:bg-yellow-500 hover:text-white transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50 transform hover:scale-110"
-                      aria-label="Edit"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => deleteFlow(entry.id)}
-                      className="p-2 text-red-500 border-2 border-red-500 rounded-full hover:bg-red-500 hover:text-white transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transform hover:scale-110"
-                      aria-label="Delete"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-          {/* Button to add a new flow */}
-          <div className="mt-4">
-            <button onClick={() => openModal(null)} className="p-2 bg-blue-500 text-white rounded flex items-center">
-              <Plus className="mr-2" />
-              Add New Flow
-            </button>
-          </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            {/* Button to add a new flow */}
+            <div className="mt-4">
+              <button onClick={() => openModal(null)} className="p-2 bg-blue-500 text-white rounded flex items-center">
+                <Plus className="mr-2" />
+                Add New Flow
+              </button>
+            </div>
 
-          {/* Modal for adding a new flow */}
-          <Modal
-            isOpen={isModalOpen}
-            onRequestClose={closeModal}
-            className="max-w-4xl w-full mx-auto mt-20 bg-white rounded-xl shadow-2xl"
-            overlayClassName="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center p-4"
-          >
-            <div className="p-8">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-3xl font-bold text-gray-800">{isEditing ? "Edit" : "New"} App Flow (Entries: {updatedFlow?.flow.length})</h2>
-                <button onClick={closeModal} className="text-gray-500 hover:text-gray-700 transition-colors">
-                  <X size={28} />
-                </button>
-              </div>
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                }}
-                className="space-y-6"
-              >
-                <div>
-                  <label htmlFor="flowId" className="block text-lg font-medium text-gray-700 mb-2">
-                    App Flow ID (Unique, used as a <b>/flow</b> route)
-                    <span className="text-amber-700 text-sm">*required</span>
-                  </label>
-                  <input
-                    type="text"
-                    id="flowId"
-                    value={updatedFlow?.id}
-                    placeholder="App-Flow-Id"
-                    onChange={(e) => handleFlowIdChange(e.target.value)}
-                    className="w-full px-4 py-3 bg-gray-100 text-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-300"
-                    required
-                  />
+            {/* Modal for adding a new flow */}
+            <Modal
+              isOpen={isModalOpen}
+              onRequestClose={closeModal}
+              className="max-w-4xl w-full mx-auto mt-20 bg-white rounded-xl shadow-2xl"
+              overlayClassName="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center p-4"
+            >
+              <div className="p-8">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-3xl font-bold text-gray-800">
+                    {isEditing ? "Edit" : "New"} App Flow (Entries: {updatedFlow?.flow.length})
+                  </h2>
+                  <button onClick={closeModal} className="text-gray-500 hover:text-gray-700 transition-colors">
+                    <X size={28} />
+                  </button>
                 </div>
-                <div className="max-h-96 overflow-y-auto pr-2 space-y-6">
-                  {updatedFlow?.flow.map((nextEntry, index) => (
-                    <div key={index} className="bg-gray-50 p-6 rounded-lg border border-gray-200 relative">
-                      <h3 className="text-xl font-semibold mb-4 text-indigo-600">Entry {index + 1}</h3>
-                      <div className="space-y-4">
-                        <label htmlFor={`url-${index}`} className="block text-sm font-medium text-gray-700">
-                          URL
-                        </label>
-                        <input
-                          type="url"
-                          value={nextEntry.url}
-                          onChange={(e) => handleInputChange(index, "url", e.target.value)}
-                          placeholder="URL"
-                          className="w-full px-4 py-3 bg-white text-gray-800 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-300"
-                          required
-                        />
-                        <label htmlFor={`conditional-${index}`} className="block text-sm font-medium text-gray-700">
-                          Conditional
-                        </label>
-                        <input
-                          type="number"
-                          value={nextEntry.conditional}
-                          onChange={(e) => handleInputChange(index, "conditional", parseInt(e.target.value))}
-                          placeholder="Conditional"
-                          className="w-full px-4 py-3 bg-white text-gray-800 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-300"
-                        />
-                        <div className="flex items-center space-x-3">
-                          <label htmlFor={`redirect-${index}`} className="flex items-center cursor-pointer">
-                            <div className="relative inline-block w-12 mr-2 align-middle select-none">
-                              <input
-                                type="checkbox"
-                                id={`redirect-${index}`}
-                                checked={nextEntry.redirect}
-                                onChange={(e) => handleInputChange(index, "redirect", e.target.checked)}
-                                className="sr-only"
-                              />
-                              <div className="w-12 h-6 bg-gray-300 rounded-full shadow-inner">
-                                <div
-                                  className={`absolute left-0 w-6 h-6 rounded-full shadow transform transition-transform duration-300 ease-in-out ${nextEntry.redirect ? "translate-x-6 bg-indigo-500" : "translate-x-0 bg-white"
-                                    }`}
-                                ></div>
-                              </div>
-                            </div>
-                            <span className="text-sm font-medium text-gray-700">{nextEntry.redirect ? "Redirect Enabled (Opening this URL in a new tab.)" : "Redirect Disabled"}</span>
-                          </label>
-                        </div>
-                      </div>
-                      <Button
-                        onClick={() => deleteUrlEntry(index)}
-                        className="absolute top-2 right-2 bg-zinc-200 text-red-400 hover:text-red-500 hover:bg-zinc-300"
-                        style={{ padding: "1rem" }}
-                      >
-                        <Trash2 size={24} />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-                <button
-                  type="button"
-                  onClick={addNewUrlEntry}
-                  className="w-full py-3 px-4 flex items-center justify-center text-lg font-medium text-white bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg hover:from-indigo-600 hover:to-purple-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300"
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                  }}
+                  className="space-y-6"
                 >
-                  <Plus size={24} className="mr-2" />
-                  Add New URL Entry
-                </button>
-                <div className="flex space-x-4">
-                  <Button
-                    disabled={updatedFlow?.flow.length === 0 || isLoading}
-                    onClick={saveFlow}
-                    className="flex-1 py-3 px-4 flex text-lg items-center justify-center font-medium text-white bg-gradient-to-r from-emerald-500 to-teal-500 rounded-lg hover:from-emerald-600 hover:to-teal-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all duration-300"
+                  <div>
+                    <label htmlFor="flowId" className="block text-lg font-medium text-gray-700 mb-2">
+                      App Flow ID (Unique, used as a <b>/flow</b> route)
+                      <span className="text-amber-700 text-sm">*required</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="flowId"
+                      value={updatedFlow?.id}
+                      placeholder="App-Flow-Id"
+                      onChange={(e) => handleFlowIdChange(e.target.value)}
+                      className="w-full px-4 py-3 bg-gray-100 text-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-300"
+                      required
+                    />
+                  </div>
+                  <div className="max-h-96 overflow-y-auto pr-2 space-y-6">
+                    {updatedFlow?.flow.map((nextEntry, index) => (
+                      <div key={index} className="bg-gray-50 p-6 rounded-lg border border-gray-200 relative">
+                        <h3 className="text-xl font-semibold mb-4 text-indigo-600">Entry {index + 1}</h3>
+                        <div className="space-y-4">
+                          <label htmlFor={`url-${index}`} className="block text-sm font-medium text-gray-700">
+                            URL
+                          </label>
+                          <input
+                            type="url"
+                            value={nextEntry.url}
+                            onChange={(e) => handleInputChange(index, "url", e.target.value)}
+                            placeholder="URL"
+                            className="w-full px-4 py-3 bg-white text-gray-800 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-300"
+                            required
+                          />
+                          <label htmlFor={`conditional-${index}`} className="block text-sm font-medium text-gray-700">
+                            Conditional
+                          </label>
+                          <input
+                            type="number"
+                            value={nextEntry.conditional}
+                            onChange={(e) => handleInputChange(index, "conditional", parseInt(e.target.value))}
+                            placeholder="Conditional"
+                            className="w-full px-4 py-3 bg-white text-gray-800 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-300"
+                          />
+                          <div className="flex items-center space-x-3">
+                            <label htmlFor={`redirect-${index}`} className="flex items-center cursor-pointer">
+                              <div className="relative inline-block w-12 mr-2 align-middle select-none">
+                                <input
+                                  type="checkbox"
+                                  id={`redirect-${index}`}
+                                  checked={nextEntry.redirect}
+                                  onChange={(e) => handleInputChange(index, "redirect", e.target.checked)}
+                                  className="sr-only"
+                                />
+                                <div className="w-12 h-6 bg-gray-300 rounded-full shadow-inner">
+                                  <div
+                                    className={`absolute left-0 w-6 h-6 rounded-full shadow transform transition-transform duration-300 ease-in-out ${
+                                      nextEntry.redirect ? "translate-x-6 bg-indigo-500" : "translate-x-0 bg-white"
+                                    }`}
+                                  ></div>
+                                </div>
+                              </div>
+                              <span className="text-sm font-medium text-gray-700">
+                                {nextEntry.redirect
+                                  ? "Redirect Enabled (Opening this URL in a new tab.)"
+                                  : "Redirect Disabled"}
+                              </span>
+                            </label>
+                          </div>
+                        </div>
+                        <Button
+                          onClick={() => deleteUrlEntry(index)}
+                          className="absolute top-2 right-2 bg-zinc-200 text-red-400 hover:text-red-500 hover:bg-zinc-300"
+                          style={{ padding: "1rem" }}
+                        >
+                          <Trash2 size={24} />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={addNewUrlEntry}
+                    className="w-full py-3 px-4 flex items-center justify-center text-lg font-medium text-white bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg hover:from-indigo-600 hover:to-purple-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300"
                   >
-                    {isLoading ? (
-                      <PulseLoader color="#ffffff" size={10} />
-                    ) : (
-                      <>
-                        <Save size={24} className="mr-2" />
-                        Save Flow
-                      </>
-                    )}
-                  </Button>
-                  <Button
-                    onClick={closeModal}
-                    className="flex-1 py-3 px-4 text-lg font-medium text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-300"
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </form>
-            </div>
-          </Modal>
+                    <Plus size={24} className="mr-2" />
+                    Add New URL Entry
+                  </button>
+                  <div className="flex space-x-4">
+                    <Button
+                      disabled={updatedFlow?.flow.length === 0 || isLoading}
+                      onClick={saveFlow}
+                      className="flex-1 py-3 px-4 flex text-lg items-center justify-center font-medium text-white bg-gradient-to-r from-emerald-500 to-teal-500 rounded-lg hover:from-emerald-600 hover:to-teal-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all duration-300"
+                    >
+                      {isLoading ? (
+                        <PulseLoader color="#ffffff" size={10} />
+                      ) : (
+                        <>
+                          <Save size={24} className="mr-2" />
+                          Save Flow
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      onClick={closeModal}
+                      className="flex-1 py-3 px-4 text-lg font-medium text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-300"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </form>
+              </div>
+            </Modal>
 
-          {/* Global loading overlay */}
-          {isLoading && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex flex-col items-center text-slate-300 justify-center z-50">
-              <p className="text-2xl">Working on it! 🎉</p>
-              <br />
-              <PuffLoader color="#ffffff" size={100} />
+            {/* Global loading overlay */}
+            {isLoading && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex flex-col items-center text-slate-300 justify-center z-50">
+                <p className="text-2xl">Working on it! 🎉</p>
+                <br />
+                <PuffLoader color="#ffffff" size={100} />
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <h2 className="text-3xl font-semibold">App Flows</h2>
+            <div className="bg-white shadow-md rounded-lg p-6 h-full flex flex-wrap justify-center gap-4 transition-shadow duration-500 ease-in-out">
+              <div className="max-w-sm rounded-lg overflow-hidden shadow-lg bg-white m-4 relative hover:shadow-xl transition-shadow duration-500 ease-in-out cursor-pointer" style={{width: '100%', height: 'auto', minHeight: '300px'}} onClick={() => console.log("Curious Reader Web Player")}> {/* Reduced width for better visibility */}
+                <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" className="w-full h-full object-cover absolute">
+                  <defs>
+                    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stop-color="#ff9a9e" />
+                      <stop offset="100%" stop-color="#fecfef" />
+                    </linearGradient>
+                  </defs>
+                  <rect width="100%" height="100%" fill="url(#gradient)" rx="10" />
+                </svg>
+                <div className="p-6 relative flex flex-col items-start justify-start" style={{height: 'auto', minHeight: '300px'}}> {/* Changed flex direction to column and alignment to start */}
+                  <div className="absolute bottom-0 left-0 bg-white bg-opacity-50 p-4 rounded-t-lg w-full flex items-start justify-center" style={{height: 'auto', minHeight: '100px'}}> {/* Changed position to bottom and adjusted styles */}
+                    <h2 className="text-base font-medium text-gray-900 text-left">Curious Reader Web Player</h2> {/* Changed text alignment to left */}
+                  </div>
+                </div>
+                <div className="flex justify-center mt-4 mb-4 absolute bottom-0 left-0 w-full">
+                  <span className="mr-2 bg-green-200 text-green-600 py-1 px-2 rounded flex items-center justify-center text-xs">
+                    dev
+                    <span className="ml-1 w-1 h-1 bg-green-500 rounded-full animate-pulse"></span>
+                  </span>
+                  <span className="mr-2 bg-green-200 text-green-600 py-1 px-2 rounded flex items-center justify-center text-xs">
+                    prod
+                    <span className="ml-1 w-1 h-1 bg-green-500 rounded-full animate-pulse"></span>
+                  </span>
+                </div>
+              </div>
+              <div className="max-w-sm rounded-lg overflow-hidden shadow-lg bg-white m-4 relative hover:shadow-xl transition-shadow duration-500 ease-in-out cursor-pointer" style={{width: '100%', height: 'auto', minHeight: '300px'}} onClick={() => console.log("Assessment")}> {/* Reduced width for better visibility */}
+                <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" className="w-full h-full object-cover absolute">
+                  <defs>
+                    <linearGradient id="gradient2" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stop-color="#c9e4ca" />
+                      <stop offset="100%" stop-color="#e4f0e4" />
+                    </linearGradient>
+                  </defs>
+                  <rect width="100%" height="100%" fill="url(#gradient2)" rx="10" />
+                </svg>
+                <div className="p-6 relative flex flex-col items-start justify-start" style={{height: 'auto', minHeight: '300px'}}> {/* Changed flex direction to column and alignment to start */}
+                  <div className="absolute bottom-0 left-0 bg-white bg-opacity-50 p-4 rounded-t-lg w-full flex items-start justify-center" style={{height: 'auto', minHeight: '100px'}}> {/* Changed position to bottom and adjusted styles */}
+                    <h2 className="text-base font-medium text-gray-900 text-left">Assessment</h2> {/* Changed text alignment to left */}
+                  </div>
+                </div>
+                <div className="flex justify-center mt-4 mb-4 absolute bottom-0 left-0 w-full">
+                  <span className="mr-2 bg-green-200 text-green-600 py-1 px-2 rounded flex items-center justify-center text-xs">
+                    dev
+                    <span className="ml-1 w-1 h-1 bg-green-500 rounded-full animate-pulse"></span>
+                  </span>
+                  <span className="mr-2 bg-green-200 text-green-600 py-1 px-2 rounded flex items-center justify-center text-xs">
+                    prod
+                    <span className="ml-1 w-1 h-1 bg-green-500 rounded-full animate-pulse"></span>
+                  </span>
+                </div>
+              </div>
+              <div className="max-w-sm rounded-lg overflow-hidden shadow-lg bg-white m-4 relative hover:shadow-xl transition-shadow duration-500 ease-in-out cursor-pointer" style={{width: '100%', height: 'auto', minHeight: '300px'}} onClick={() => console.log("Feed The Monster")}> {/* Reduced width for better visibility */}
+                <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" className="w-full h-full object-cover absolute">
+                  <defs>
+                    <linearGradient id="gradient3" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stop-color="#87ceeb" />
+                      <stop offset="100%" stop-color="#add8e6" />
+                    </linearGradient>
+                  </defs>
+                  <rect width="100%" height="100%" fill="url(#gradient3)" rx="10" />
+                </svg>
+                <div className="p-6 relative flex flex-col items-start justify-start" style={{height: 'auto', minHeight: '300px'}}> {/* Changed flex direction to column and alignment to start */}
+                  <div className="absolute bottom-0 left-0 bg-white bg-opacity-50 p-4 rounded-t-lg w-full flex items-start justify-center" style={{height: 'auto', minHeight: '100px'}}> {/* Changed position to bottom and adjusted styles */}
+                    <h2 className="text-base font-medium text-gray-900 text-left">Feed The Monster</h2> {/* Changed text alignment to left */}
+                  </div>
+                </div>
+                <div className="flex justify-center mt-4 mb-4 absolute bottom-0 left-0 w-full">
+                  <span className="mr-2 bg-green-200 text-green-600 py-1 px-2 rounded flex items-center justify-center text-xs">
+                    dev
+                    <span className="ml-1 w-1 h-1 bg-green-500 rounded-full animate-pulse"></span>
+                  </span>
+                  <span className="mr-2 bg-green-200 text-green-600 py-1 px-2 rounded flex items-center justify-center text-xs">
+                    prod
+                    <span className="ml-1 w-1 h-1 bg-green-500 rounded-full animate-pulse"></span>
+                  </span>
+                </div>
+              </div>
             </div>
-          )}
-        </div>
+            </div>
+        )
       }
     />
   );

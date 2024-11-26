@@ -102,29 +102,29 @@ export default function Home({ selectedEntry, initialURL }: ClientProps) {
         // Check if the condition is met for the next URL
         if (score > selectedEntry.flow[currentURLIndex.current + 1].conditional) {
           // Activate the fullscreen display here
-          setAppDisplayActive(true);
-          setAppIdsToDisplay(['the-lost-doll', 'lets-fly']);
-          setAppDisplayTitle('Words');
-          // currentURLIndex.current = currentURLIndex.current + 1; // Move to the next entry
-          // const nextURL = selectedEntry.flow[currentURLIndex.current]?.url;
-          // const redirect = selectedEntry.flow[currentURLIndex.current]?.redirect;
+          // setAppDisplayActive(true);
+          // setAppIdsToDisplay(['the-lost-doll', 'lets-fly']);
+          // setAppDisplayTitle('Words');
+          currentURLIndex.current = currentURLIndex.current + 1; // Move to the next entry
+          const nextURL = selectedEntry.flow[currentURLIndex.current]?.url;
+          const redirect = selectedEntry.flow[currentURLIndex.current]?.redirect;
 
-          // if (nextURL) {
-          //   if (redirect) {
-          //     window.location.href = nextURL;
-          //   } else {
-          //     const url = new URL(nextURL, window.location.href);
-          //     const currentParams = new URLSearchParams(window.location.search);
-          //     currentParams.forEach((value, key) => {
-          //       url.searchParams.set(key, value);
-          //     });
-          //     setCurrentlyOpenAssessmentURL(url.toString());
-          //   }
-          // }
+          if (nextURL) {
+            if (redirect) {
+              window.location.href = nextURL;
+            } else {
+              const url = new URL(nextURL, window.location.href);
+              const currentParams = new URLSearchParams(window.location.search);
+              currentParams.forEach((value, key) => {
+                url.searchParams.set(key, value);
+              });
+              setCurrentlyOpenAssessmentURL(url.toString());
+            }
+          }
         } else {
-          setAppDisplayActive(true);
-          setAppIdsToDisplay(['frog', 'market']);
-          setAppDisplayTitle('Sounds');
+          // setAppDisplayActive(true);
+          // setAppIdsToDisplay(['frog', 'market']);
+          // setAppDisplayTitle('Sounds');
         }
       }
     };
