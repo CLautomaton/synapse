@@ -1,5 +1,1 @@
-{
-  "/manifest.json/route": "app/manifest.json/route.js",
-  "/[flow]/page": "app/[flow]/page.js",
-  "/favicon.ico/route": "app/favicon.ico/route.js"
-}
+{}
