@@ -60,7 +60,7 @@ const FullscreenComponent: React.FC<FullscreenComponentProps & { onImageClick: (
       <h1 className="text-3xl font-bold text-gray-800 mb-5">{title}</h1>
       <div className="flex flex-col w-6/12 p-5 gap-10 justify-center items-center">
         {apps.map((app, index) => (
-          <button key={index} onClick={() => onImageClick(app.url)}>
+          <button key={index} className="w-80 h-80" onClick={() => onImageClick(app.url)}>
             <img
               className="border-4 border-transparent border-r-indigo-500 border-b-purple-500 w-80 h-80"
               src={app.imageURL}
