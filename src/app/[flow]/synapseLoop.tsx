@@ -58,7 +58,7 @@ const FullscreenComponent: React.FC<FullscreenComponentProps & { onImageClick: (
   return (
     <div className="flex flex-col items-center justify-center h-screen w-screen">
       <h1 className="text-3xl font-bold text-gray-800 mb-5">{title}</h1>
-      <div className="flex flex-col w-6/12 p-5 gap-10 justify-center align-middle">
+      <div className="flex flex-col w-6/12 p-5 gap-10 justify-center items-center">
         {apps.map((app, index) => (
           <button key={index} onClick={() => onImageClick(app.url)}>
             <img
@@ -154,7 +154,7 @@ export default function SynapseLoop({ selectedEntry, initialURL }: ClientProps) 
   }, [selectedEntry.flow]);
 
   return (
-    <main className="flex min-h-screen bg-[#3d85d1]">
+    <main className={`flex min-h-screen ${currentlyOpenAssessmentURL?.includes("?book") ? "bg-white" : "bg-[#3d85d1]"}`}>
       {appDisplayActive ? (
         <FullscreenComponent
           title={appDisplayTitle}
