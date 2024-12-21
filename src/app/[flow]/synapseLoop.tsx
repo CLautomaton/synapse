@@ -7,6 +7,7 @@ import { addUtmParams } from "@/components/urlHelpers";
 export interface ClientProps {
   selectedEntry: AppFlowEntry;
   initialURL: string;
+  startIndex: number;
 }
 
 interface AppEntry {
@@ -75,10 +76,10 @@ const FullscreenComponent: React.FC<FullscreenComponentProps & { onImageClick: (
   );
 };
 
-export default function SynapseLoop({ selectedEntry, initialURL }: ClientProps) {
+export default function SynapseLoop({ selectedEntry, initialURL, startIndex }: ClientProps) {
   console.log("Synapse Loop initialiazing...", selectedEntry);
   const [currentlyOpenAssessmentURL, setCurrentlyOpenAssessmentURL] = useState<string | null>(null);
-  const currentURLIndex = useRef<number>(0);
+  const currentURLIndex = useRef<number>(startIndex);
 
   const [appDisplayActive, setAppDisplayActive] = useState<boolean>(false);
   const [appIdsToDisplay, setAppIdsToDisplay] = useState<string[]>(["frog", "market"]);
