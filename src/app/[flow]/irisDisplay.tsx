@@ -29,13 +29,13 @@ const appContent: AppContent = {
     },
     {
       id: "letterSounds-westAfricanEnglish",
-      url: "https://synapse.curiouscontent.org/loop-mpv",
+      url: "https://synapse.curiouscontent.org/loop-mvp",
       imageURL: "https://devcuriousreader.wpcomstaging.com/container_app_manifest/icons/assessment_icon_dev.png",
       urlLaunchType: 'window',
     },
     {
       id: "sightWords-westAfricanEnglish",
-      url: "https://synapse.curiouscontent.org/loop-mpv?start=1",
+      url: "https://synapse.curiouscontent.org/loop-mvp?start=1",
       imageURL:
         "https://devcuriousreader.wpcomstaging.com/container_app_manifest/icons/assessment_icon_sight_word_dev.png",
       urlLaunchType: 'window',
