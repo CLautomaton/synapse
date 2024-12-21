@@ -30,9 +30,11 @@ const ServerComponent = async ({ params, searchParams }: {
   searchParams: { apps?: string, start?: string }
 }) => {
   const { flow } = params;
-  const appsParam = searchParams?.apps?.split('=')[1] || '';
+  const appsParam = searchParams?.apps || '';
+
   const appsList = appsParam.split(',').filter((app) => app);
-  const startParam = searchParams?.start?.split('=')[1] || '';
+
+  const startParam = searchParams?.start || '';
   const startingIndex = parseInt(startParam, 10) || 0;
 
   console.log('Received apps parameter:', appsParam);
@@ -50,7 +52,7 @@ const ServerComponent = async ({ params, searchParams }: {
   // Pass data to the client-side component
   return <>
     { appsList.length > 0 ? <IrisDisplay appsList={appsList} /> : 
-      flow === 'loop-mvp' && appsList.length === 0 ? <SynapseLoop initialURL={initialURL} selectedEntry={selectedEntry} /> : 
+      flow === 'loop-mvp' ? <SynapseLoop initialURL={initialURL} selectedEntry={selectedEntry} startIndex={startParam !== undefined ? startingIndex : 0} /> : 
       <AppFlowDisplay initialURL={initialURL} selectedEntry={selectedEntry} /> }
   </>;
 };
