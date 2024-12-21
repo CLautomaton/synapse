@@ -142,13 +142,13 @@ export default function SynapseLoop({ selectedEntry, initialURL, startIndex }: C
           // setAppIdsToDisplay(["ftm-westAfricanEnglish", "letterSounds-westAfricanEnglish"]);
           // setAppDisplayTitle("Sounds");
           const irisURL = "https://synapse.curiouscontent.org/loop-mvp?apps=ftm-westAfricanEnglish,letterSounds-westAfricanEnglish";
-          const finalIrisURL = addUtmParams(irisURL, window.location.href, ["apps"]);
+          const finalIrisURL = addUtmParams(irisURL, window.location.href, ["apps", "start"]);
           window.location.href = finalIrisURL;
         }
       } else if (currentURLIndex.current + 1 >= selectedEntry.flow.length) {
         // This is for the demo, if the user gets below 80% score we show the sounds display
         const irisURL = "https://synapse.curiouscontent.org/loop-mvp?apps=book-coloursLevel2En,sightWords-westAfricanEnglish";
-        const finalIrisURL = addUtmParams(irisURL, window.location.href, ["apps"]);
+        const finalIrisURL = addUtmParams(irisURL, window.location.href, ["apps", "start"]);
         window.location.href = finalIrisURL;
       }
     };
