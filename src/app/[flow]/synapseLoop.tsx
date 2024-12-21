@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AppFlowEntry, NextEntry } from "@/pages/dashboard";
+import { addUtmParams } from "@/components/urlHelpers";
 
 export interface ClientProps {
   selectedEntry: AppFlowEntry;
@@ -127,6 +128,7 @@ export default function SynapseLoop({ selectedEntry, initialURL }: ClientProps) 
               } else {
                 const url = new URL(nextURL, window.location.href);
                 const currentParams = new URLSearchParams(window.location.search);
+                currentParams.delete("apps");
                 currentParams.forEach((value, key) => {
                   url.searchParams.set(key, value);
                 });
@@ -135,15 +137,18 @@ export default function SynapseLoop({ selectedEntry, initialURL }: ClientProps) 
             }
         } else {
           // This is for the demo, if the user gets below 80% score we show the sounds display
-          setAppDisplayActive(true);
-          setAppIdsToDisplay(["ftm-westAfricanEnglish", "letterSounds-westAfricanEnglish"]);
-          setAppDisplayTitle("Sounds");
+          // setAppDisplayActive(true);
+          // setAppIdsToDisplay(["ftm-westAfricanEnglish", "letterSounds-westAfricanEnglish"]);
+          // setAppDisplayTitle("Sounds");
+          const irisURL = "https://synapse.curiouscontent.org/loop-mvp?apps=ftm-westAfricanEnglish,letterSounds-westAfricanEnglish";
+          const finalIrisURL = addUtmParams(irisURL, window.location.href, ["apps"]);
+          window.location.href = finalIrisURL;
         }
       } else if (currentURLIndex.current + 1 >= selectedEntry.flow.length) {
         // This is for the demo, if the user gets below 80% score we show the sounds display
-        setAppDisplayActive(true);
-        setAppIdsToDisplay(["book-coloursLevel2En", "sightWords-westAfricanEnglish"]);
-        setAppDisplayTitle("Words");
+        const irisURL = "https://synapse.curiouscontent.org/loop-mvp?apps=book-coloursLevel2En,sightWords-westAfricanEnglish";
+        const finalIrisURL = addUtmParams(irisURL, window.location.href, ["apps"]);
+        window.location.href = finalIrisURL;
       }
     };
 
