@@ -21,7 +21,7 @@ declare module "next-auth" {
 export const authOptions: AuthOptions = {
   providers: [ 
     CredentialsProvider({
-      name: 'Credentials',
+      name: 'credentials',
       credentials: {
         username: { label: "Username", type: "text" },
         password: { label: "Password", type: "password" }

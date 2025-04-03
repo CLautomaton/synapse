@@ -57,7 +57,7 @@ export default function SignIn({ csrfToken }: SignInProps) {
         <h1 className="text-xl font-semibold text-center">Sign in to your Curious Frame account</h1>
       </div>
       <Form {...form} >
-        <form onSubmit={form.handleSubmit(onSubmit)} className='inline-block'>
+        <form onSubmit={(e) => { e.preventDefault(); form.handleSubmit(onSubmit)()}} className='inline-block'>
           <FormField
             control={form.control}
             name="username"
