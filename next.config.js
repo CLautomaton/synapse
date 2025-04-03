@@ -146,7 +146,9 @@ const nextConfig = {
   },
   
   experimental: {
-    serverActions: true
+    serverActions: {
+      allowedOrigins: ['synapse.curiouscontent.org', 'localhost:3000']
+    }
   }
 };
 
