@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import { adminDB } from '@/config/firebaseAdmin';
 import { getServerSession } from "next-auth";
-import { authOptions } from "../../auth/[...nextauth]/route";
+import { authOptions } from "../../auth/auth.config";
+
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
