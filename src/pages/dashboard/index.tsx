@@ -8,10 +8,15 @@ import fs from "fs";
 import path from "path";
 import Modal from "react-modal";
 import { ArrowRightLeft, Boxes, Edit, ExternalLink, Frame, Plus, Save, Trash2, X } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { adminDB } from "@/config/firebaseAdmin";
 import { PuffLoader, PulseLoader } from "react-spinners";
+
+// Set the app element for React Modal
+if (typeof window !== 'undefined') {
+  Modal.setAppElement('#__next');
+}
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -97,23 +102,6 @@ export default function AdminPanel({ version, entries: initialEntries }: Props) 
       return;
     }
 
-    // Check if the flow ID already exists
-    if (!isEditing) {
-      const existingFlows = await fetch("/api/flows/get-flows");
-      if (existingFlows.ok) {
-        const existingFlowsData = await existingFlows.json();
-        const flowExists = existingFlowsData.flows.some((flow: AppFlowEntry) => flow.id === updatedFlow.id);
-        if (flowExists) {
-          alert("A flow with this ID already exists. Please choose a different ID.");
-          return;
-        }
-      } else {
-        console.error("Failed to fetch existing flows");
-        alert("Unable to verify flow ID uniqueness. Please try again later.");
-        return;
-      }
-    }
-
     // Ensure the flow ID is Firebase-safe
     const sanitizedFlowId = updatedFlow.id.replace(/[^a-zA-Z0-9-_]/g, "");
     if (sanitizedFlowId !== updatedFlow.id) {
@@ -138,11 +126,15 @@ export default function AdminPanel({ version, entries: initialEntries }: Props) 
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ flow: updatedFlow }),
+        body: JSON.stringify({ 
+          flow: updatedFlow,
+          isEditing: isEditing 
+        }),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to save flow");
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to save flow");
       }
 
       const result = await response.json();
@@ -186,8 +178,10 @@ export default function AdminPanel({ version, entries: initialEntries }: Props) 
     setIsLoading(true);
 
     try {
-      const response = await fetch(`/api/flows/delete-flow?flowId=${id}`, {
+      const response = await fetch(`/api/flows/delete-flow`, {
         method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ flowId: id }),
       });
 
       if (!response.ok) {
@@ -424,8 +418,10 @@ export default function AdminPanel({ version, entries: initialEntries }: Props) 
             <Modal
               isOpen={isModalOpen}
               onRequestClose={closeModal}
-              className="max-w-4xl w-full mx-auto mt-20 bg-white rounded-xl shadow-2xl"
-              overlayClassName="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center p-4"
+              ariaHideApp={true}
+              contentLabel="Flow Editor Modal"
+              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-8 rounded-lg shadow-lg w-full max-w-4xl"
+              overlayClassName="fixed inset-0 bg-black bg-opacity-50"
             >
               <div className="p-8">
                 <div className="flex justify-between items-center mb-6">
