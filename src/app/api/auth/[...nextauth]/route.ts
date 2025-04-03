@@ -1,14 +1,10 @@
-import NextAuth, { AuthOptions, JWT, Session, User } from 'next-auth';
+import NextAuth, { AuthOptions } from 'next-auth';
 import { DefaultSession } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 
 declare module "next-auth" {
-  /**
-   * Returned by `useSession`, `getSession` and received as a prop on the `SessionProvider` React Context
-   */
   interface Session {
     user: {
-      /** The user's postal address. */
       id: string
     } & DefaultSession["user"]
   }
@@ -67,21 +63,9 @@ export const authOptions: AuthOptions = {
       return session;
     },
   },
-  debug: true, // Enable debug in production to help diagnose issues
-  secret: process.env.NEXTAUTH_SECRET,
-  logger: {
-    error(code, metadata) {
-      console.error('NextAuth error:', code, metadata);
-    },
-    warn(code) {
-      console.warn('NextAuth warning:', code);
-    },
-    debug(code, metadata) {
-      console.log('NextAuth debug:', code, metadata);
-    }
-  }
+  debug: true,
+  secret: process.env.NEXTAUTH_SECRET
 };
 
 const handler = NextAuth(authOptions);
-
-export { handler as GET, handler as POST };
+export { handler as GET, handler as POST }; 

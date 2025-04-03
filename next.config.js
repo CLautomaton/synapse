@@ -134,7 +134,7 @@ const nextConfig = {
         ]
       },
       {
-        source: '/api/auth/:path*',
+        source: '/api/:path*',
         headers: [
           {
             key: 'Cache-Control',
@@ -143,6 +143,10 @@ const nextConfig = {
         ]
       }
     ];
+  },
+  
+  experimental: {
+    serverActions: true
   }
 };
 
