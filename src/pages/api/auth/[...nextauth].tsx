@@ -21,18 +21,26 @@ declare module "next-auth" {
 export const authOptions: AuthOptions = {
   providers: [ 
     CredentialsProvider({
-      name: 'credentials',
+      name: 'Credentials',
       credentials: {
         username: { label: "Username", type: "text" },
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        console.log('Credentials', credentials);
-        // Replace this with your authentication logic
-        if (credentials?.username === process.env.ADMIN_USERNAME && credentials?.password === process.env.ADMIN_PASSWORD) {
-          return { id: '1', name: 'Curious Frame Admin', email: 'automaton@curiouslearning.org' };
+        try {
+          if (!credentials?.username || !credentials?.password) {
+            throw new Error('Missing credentials');
+          }
+
+          if (credentials.username === process.env.ADMIN_USERNAME && credentials.password === process.env.ADMIN_PASSWORD) {
+            return { id: '1', name: 'Curious Frame Admin', email: 'automaton@curiouslearning.org' };
+          }
+          
+          throw new Error('Invalid credentials');
+        } catch (error) {
+          console.error('Auth error:', error);
+          return null;
         }
-        return null;
       }
     })
   ],
@@ -43,6 +51,7 @@ export const authOptions: AuthOptions = {
   },
   pages: {
     signIn: '/auth/signin',
+    error: '/auth/error',
   },
   callbacks: {
     async jwt({ token, user }) {
@@ -51,16 +60,28 @@ export const authOptions: AuthOptions = {
       }
       return token;
     },
-    async session({ session, token, }) {
+    async session({ session, token }) {
       if (token?.id) {
         session.user.id = token.id as string;
       }
       return session;
     },
   },
-  jwt: {
-    secret: process.env.NEXTAUTH_SECRET,
-  },
+  debug: true, // Enable debug in production to help diagnose issues
+  secret: process.env.NEXTAUTH_SECRET,
+  logger: {
+    error(code, metadata) {
+      console.error('NextAuth error:', code, metadata);
+    },
+    warn(code) {
+      console.warn('NextAuth warning:', code);
+    },
+    debug(code, metadata) {
+      console.log('NextAuth debug:', code, metadata);
+    }
+  }
 };
 
-export default NextAuth(authOptions);
+const handler = NextAuth(authOptions);
+
+export { handler as GET, handler as POST };

@@ -132,6 +132,15 @@ const nextConfig = {
             value: '1; mode=block'
           }
         ]
+      },
+      {
+        source: '/api/auth/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-store, max-age=0'
+          }
+        ]
       }
     ];
   }
