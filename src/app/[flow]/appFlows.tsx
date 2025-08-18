@@ -25,6 +25,16 @@ export default function AppFlowDisplay({ selectedEntry, initialURL }: ClientProp
     currentParams.forEach((value, key) => {
       url.searchParams.set(key, value);
     });
+    
+    // Add the required score from the next flow entry if it exists
+    if (selectedEntry.flow.length > 1) {
+      const nextFlowEntry = selectedEntry.flow[currentURLIndex.current + 1];
+      if (nextFlowEntry?.conditional) {
+        url.searchParams.set('requiredScore', nextFlowEntry.conditional.toString());
+      }
+    }
+    
+    console.log('URL', url.toString());
     setCurrentlyOpenAssessmentURL(url.toString());
   }, [initialURL]);
 
@@ -54,9 +64,13 @@ export default function AppFlowDisplay({ selectedEntry, initialURL }: ClientProp
               const url = new URL(nextURL, window.location.href);
               const currentParams = new URLSearchParams(window.location.search);
               currentParams.forEach((value, key) => {
-                url.searchParams.set(key, value);
+                // Don't copy over the requiredScore parameter for the next URL
+                if (key !== 'requiredScore') {
+                  url.searchParams.set(key, value);
+                }
               });
               setCurrentlyOpenAssessmentURL(url.toString());
+              console.log('URL', url.toString());
             }
           }
         }
