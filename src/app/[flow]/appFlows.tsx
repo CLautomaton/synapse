@@ -26,11 +26,22 @@ export default function AppFlowDisplay({ selectedEntry, initialURL }: ClientProp
       url.searchParams.set(key, value);
     });
     
-    // Add the required score from the next flow entry if it exists
+    // Add the required score and next assessment from the next flow entry if it exists
     if (selectedEntry.flow.length > 1) {
       const nextFlowEntry = selectedEntry.flow[currentURLIndex.current + 1];
       if (nextFlowEntry?.conditional) {
         url.searchParams.set('requiredScore', nextFlowEntry.conditional.toString());
+      }
+      if (nextFlowEntry?.url) {
+        try {
+          const nextUrl = new URL(nextFlowEntry.url);
+          const nextAssessmentData = nextUrl.searchParams.get('data');
+          if (nextAssessmentData) {
+            url.searchParams.set('nextAssessment', nextAssessmentData);
+          }
+        } catch (error) {
+          console.warn('Could not parse next assessment URL:', error);
+        }
       }
     }
     
@@ -65,7 +76,7 @@ export default function AppFlowDisplay({ selectedEntry, initialURL }: ClientProp
               const currentParams = new URLSearchParams(window.location.search);
               currentParams.forEach((value, key) => {
                 // Don't copy over the requiredScore parameter for the next URL
-                if (key !== 'requiredScore') {
+                if (key !== 'requiredScore' && key !== 'nextAssessment') {
                   url.searchParams.set(key, value);
                 }
               });
