@@ -75,11 +75,13 @@ export default function AppFlowDisplay({ selectedEntry, initialURL }: ClientProp
               const url = new URL(nextURL, window.location.href);
               const currentParams = new URLSearchParams(window.location.search);
               currentParams.forEach((value, key) => {
-                // Don't copy over the requiredScore parameter for the next URL
-                if (key !== 'requiredScore' && key !== 'nextAssessment') {
-                  url.searchParams.set(key, value);
-                }
+                url.searchParams.set(key, value);
               });
+
+              // Explicitly set requiredScore and nextAssessment to null for the next URL
+              url.searchParams.set('requiredScore', 'null');
+              url.searchParams.set('nextAssessment', 'null');
+
               setCurrentlyOpenAssessmentURL(url.toString());
               console.log('URL', url.toString());
             }
