@@ -19,20 +19,50 @@ export const authOptions: AuthOptions = {
     CredentialsProvider({
       name: 'Credentials',
       credentials: {
-        username: { label: "Username", type: "text" },
+        email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
         try {
-          if (!credentials?.username || !credentials?.password) {
+          if (!credentials?.email || !credentials?.password) {
             throw new Error('Missing credentials');
           }
 
-          if (credentials.username === process.env.ADMIN_USERNAME && credentials.password === process.env.ADMIN_PASSWORD) {
-            return { id: '1', name: 'Curious Frame Admin', email: 'automaton@curiouslearning.org' };
+          // Use Firebase REST API to sign in with email/password
+          const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+          if (!apiKey) {
+            throw new Error('Firebase API key not configured');
           }
-          
-          throw new Error('Invalid credentials');
+
+          // Authenticate with Firebase REST API
+          const response = await fetch(
+            `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey}`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                email: credentials.email,
+                password: credentials.password,
+                returnSecureToken: true,
+              }),
+            }
+          );
+
+          const data = await response.json();
+
+          if (!response.ok || data.error) {
+            throw new Error(data.error?.message || 'Invalid credentials');
+          }
+
+          // Use user data directly from Firebase REST API response
+          // The REST API already validates credentials, so we can trust the response
+          return {
+            id: data.localId, // Firebase user UID
+            name: data.displayName || data.email?.split('@')[0] || 'User',
+            email: data.email || credentials.email,
+          };
         } catch (error) {
           console.error('Auth error:', error);
           return null;

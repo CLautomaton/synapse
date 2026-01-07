@@ -12,7 +12,7 @@ import { useState } from 'react';
 import { getSession } from 'next-auth/react';
 
 const schema = z.object({
-  username: z.string().min(1, "Username is required"),
+  email: z.string().email("Invalid email address"),
   password: z.string().min(1, "Password is required")
 });
 
@@ -29,7 +29,7 @@ export default function SignIn({ csrfToken }: SignInProps) {
   const form = useForm<SignInFormData>({
     resolver: zodResolver(schema),
     defaultValues: {
-      username: "",
+      email: "",
       password: "",
     },
   });
@@ -39,7 +39,7 @@ export default function SignIn({ csrfToken }: SignInProps) {
     // Handle form submission
     const result = await signIn('credentials', {
       redirect: false,
-      username: data.username,
+      email: data.email,
       password: data.password,
     });
 
@@ -60,14 +60,15 @@ export default function SignIn({ csrfToken }: SignInProps) {
         <form onSubmit={(e) => { e.preventDefault(); form.handleSubmit(onSubmit)()}} className='inline-block'>
           <FormField
             control={form.control}
-            name="username"
+            name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel htmlFor="username">Username</FormLabel>
+                <FormLabel htmlFor="email">Email</FormLabel>
                 <FormControl>
                   <Input
-                    id="username"
-                    placeholder="Username"
+                    id="email"
+                    type="email"
+                    placeholder="Email"
                     {...field}
                     className='min-w-96'
                   />
