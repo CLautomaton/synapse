@@ -18,7 +18,6 @@ import {
   ChevronDown,
   ChevronRight
 } from "lucide-react";
-import { App } from "@/types/app";
 import getVersion from "@/utils/get-version";
 import { adminDB } from "@/config/firebaseAdmin";
 
@@ -30,12 +29,16 @@ interface Props {
 export default function FeedTheMonsterPage({ version, userRoleID }: Props) {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [app, setApp] = useState<App | null>(null);
   const [previewMode, setPreviewMode] = useState<"dev" | "prod">("dev");
-  const [loading, setLoading] = useState(true);
   const [googleSheetUrl, setGoogleSheetUrl] = useState("");
   const [isClContentExpanded, setIsClContentExpanded] = useState(true);
   const [currentlyToggledMainContent, setCurrentlyToggledMainContent] = useState<"app-flows" | "cl-content">("cl-content");
+
+  // Feed The Monster preview URLs
+  const FEED_THE_MONSTER_URLS = {
+    dev: "https://feedthemonsterdev.curiouscontent.org",
+    prod: "https://feedthemonster.curiouscontent.org",
+  };
 
   useEffect(() => {
     if (status === "loading") return;
@@ -44,29 +47,7 @@ export default function FeedTheMonsterPage({ version, userRoleID }: Props) {
       router.push("/auth/signin");
       return;
     }
-
-    fetchFeedTheMonsterApp();
   }, [status, session]);
-
-  const fetchFeedTheMonsterApp = async () => {
-    try {
-      const response = await fetch("/api/apps/get-apps");
-      if (response.ok) {
-        const data = await response.json();
-        // Find Feed The Monster app (could be by name or specific ID)
-        const ftmApp = data.apps.find((a: App) => 
-          a.name.toLowerCase().includes("feed the monster") || 
-          a.name.toLowerCase().includes("feedthemonster") ||
-          a.appID === "0" // Assuming Feed The Monster is app ID 0, adjust as needed
-        );
-        setApp(ftmApp || null);
-      }
-    } catch (error) {
-      console.error("Error fetching Feed The Monster app:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Mock functions for now (will be replaced with Python API calls)
   const handleLoadLanguageContent = () => {
@@ -98,7 +79,7 @@ export default function FeedTheMonsterPage({ version, userRoleID }: Props) {
     setCurrentlyToggledMainContent(content as "app-flows" | "cl-content");
   };
 
-  if (status === "loading" || loading) {
+  if (status === "loading") {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="animate-spin" size={32} />
@@ -110,7 +91,7 @@ export default function FeedTheMonsterPage({ version, userRoleID }: Props) {
     return null;
   }
 
-  const previewURL = previewMode === "dev" ? app?.devBaseURL : app?.prodBaseURL;
+  const previewURL = previewMode === "dev" ? FEED_THE_MONSTER_URLS.dev : FEED_THE_MONSTER_URLS.prod;
 
   return (
     <SideBarLayout
@@ -297,13 +278,7 @@ export default function FeedTheMonsterPage({ version, userRoleID }: Props) {
                 ) : (
                   <div className="flex items-center justify-center h-full text-gray-500">
                     <div className="text-center">
-                      <p className="mb-2">No preview URL available</p>
-                      <p className="text-sm">
-                        {app 
-                          ? `App config found but ${previewMode} URL is missing`
-                          : "Feed The Monster app config not found in Firebase"
-                        }
-                      </p>
+                      <p className="mb-2">Loading preview...</p>
                     </div>
                   </div>
                 )}
