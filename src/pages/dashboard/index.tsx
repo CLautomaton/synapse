@@ -116,6 +116,15 @@ export default function AdminPanel({ version, entries: initialEntries, userRoleI
     }
   };
 
+  const logOut = async () => {
+    try {
+      await signOut({ redirect: false });
+      router.push("/auth/signin");
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
+  };
+
   if (status === "loading") {
     return <p>Loading...</p>;
   }
@@ -333,15 +342,6 @@ export default function AdminPanel({ version, entries: initialEntries, userRoleI
       ...updatedFlow!,
       flow: updatedFlowEntries,
     });
-  };
-
-  const logOut = async () => {
-    try {
-      await signOut({ redirect: false });
-      router.push("/auth/signin");
-    } catch (error) {
-      console.error("Error logging out:", error);
-    }
   };
 
   const toggleMainContent = (content: string) => {

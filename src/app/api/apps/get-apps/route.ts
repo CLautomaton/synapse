@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { adminDB } from '@/config/firebaseAdmin';
+import { getAdminDB } from '@/config/firebaseAdmin';
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../auth/auth.config";
 import { AppsList, App } from '@/types/app';
@@ -18,6 +18,7 @@ export async function GET() {
     }
 
     // Fetch all apps
+    const adminDB = getAdminDB();
     const appsSnapshot = await adminDB.collection('apps').get();
     const apps: AppsList = appsSnapshot.docs.map(doc => ({
       appID: doc.id,
