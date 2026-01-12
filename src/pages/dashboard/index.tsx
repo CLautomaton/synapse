@@ -7,7 +7,7 @@ import getVersion from "@/utils/get-version";
 import fs from "fs";
 import path from "path";
 import Modal from "react-modal";
-import { ArrowRightLeft, Boxes, Edit, ExternalLink, Frame, Plus, Save, Trash2, X, Shield } from "lucide-react";
+import { ArrowRightLeft, Boxes, Edit, ExternalLink, Frame, Plus, Save, Trash2, X, Shield, ChevronDown, ChevronRight } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { adminDB } from "@/config/firebaseAdmin";
@@ -68,6 +68,9 @@ export default function AdminPanel({ version, entries: initialEntries, userRoleI
   const [currentlyToggledMainContent, setCurrentlyToggledMainContent] = useState<"app-flows" | "cl-content">(
     userRoleID === "0" ? "app-flows" : "cl-content"
   );
+  const [isClContentExpanded, setIsClContentExpanded] = useState(
+    userRoleID !== "0" || router.pathname === "/dashboard/app-content/feed-the-monster"
+  );
 
   useEffect(() => {
     const fetchRoles = async () => {
@@ -83,6 +86,14 @@ export default function AdminPanel({ version, entries: initialEntries, userRoleI
     };
     fetchRoles();
   }, []);
+
+  // Sync expansion state with router pathname
+  useEffect(() => {
+    if (router.pathname === "/dashboard/app-content/feed-the-monster") {
+      setIsClContentExpanded(true);
+      setCurrentlyToggledMainContent("cl-content");
+    }
+  }, [router.pathname]);
 
   const getRoleName = (roleID: string | null) => {
     if (!roleID) return 'Unknown';
@@ -222,9 +233,9 @@ export default function AdminPanel({ version, entries: initialEntries, userRoleI
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           flow: updatedFlow,
-          isEditing: isEditing 
+          isEditing: isEditing
         }),
       });
 
@@ -370,9 +381,8 @@ export default function AdminPanel({ version, entries: initialEntries, userRoleI
                   onClick={() => {
                     toggleMainContent("app-flows");
                   }}
-                  className={`block py-2 mb-2 px-3 rounded ${
-                    currentlyToggledMainContent === "app-flows" ? "bg-gray-500" : "bg-gray-700"
-                  }`}
+                  className={`block py-2 mb-2 px-3 rounded ${currentlyToggledMainContent === "app-flows" ? "bg-gray-500" : "bg-gray-700"
+                    }`}
                 >
                   <div className="flex items-center">
                     <ArrowRightLeft size={20} className="mr-2" />
@@ -380,26 +390,47 @@ export default function AdminPanel({ version, entries: initialEntries, userRoleI
                   </div>
                 </Link>
               )}
-              <Link
-                href=""
-                onClick={() => {
-                  toggleMainContent("cl-content");
-                }}
-                className={`block py-2 mb-2 px-3 rounded ${
-                  currentlyToggledMainContent === "cl-content" ? "bg-gray-500" : "bg-gray-700"
-                }`}
-              >
-                <div className="flex items-center">
-                  <Boxes size={20} className="mr-2" />
-                  <span className="text-sm">CL Content</span>
-                </div>
-              </Link>
+              <div>
+                <Link
+                  href=""
+                  onClick={(e) => {
+                    e.preventDefault();
+                    toggleMainContent("cl-content");
+                    setIsClContentExpanded(!isClContentExpanded);
+                  }}
+                  className={`block py-2 mb-2 px-3 rounded ${currentlyToggledMainContent === "cl-content" ? "bg-gray-500" : "bg-gray-700"
+                    }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <Boxes size={20} className="mr-2" />
+                      <span className="text-sm">CL Content</span>
+                    </div>
+                    {isClContentExpanded ? (
+                      <ChevronDown size={16} />
+                    ) : (
+                      <ChevronRight size={16} />
+                    )}
+                  </div>
+                </Link>
+                {isClContentExpanded && (userRoleID === "0" || userRoleID === "1") && (
+                  <Link
+                    href="/dashboard/app-content/feed-the-monster"
+                    className={`block py-2 mb-2 px-3 rounded ml-6 ${
+                      router.pathname === "/dashboard/app-content/feed-the-monster" ? "bg-gray-500" : "bg-gray-700"
+                    }`}
+                  >
+                    <div className="flex items-center">
+                      <span className="text-sm">Feed The Monster</span>
+                    </div>
+                  </Link>
+                )}
+              </div>
               {userRoleID === "0" && (
                 <Link
                   href="/dashboard/users"
-                  className={`block py-2 mb-2 px-3 rounded ${
-                    router.pathname === "/dashboard/users" ? "bg-gray-500" : "bg-gray-700"
-                  }`}
+                  className={`block py-2 mb-2 px-3 rounded ${router.pathname === "/dashboard/users" ? "bg-gray-500" : "bg-gray-700"
+                    }`}
                 >
                   <div className="flex items-center">
                     <Shield size={20} className="mr-2" />
@@ -607,9 +638,8 @@ export default function AdminPanel({ version, entries: initialEntries, userRoleI
                                 />
                                 <div className="w-12 h-6 bg-gray-300 rounded-full shadow-inner">
                                   <div
-                                    className={`absolute left-0 w-6 h-6 rounded-full shadow transform transition-transform duration-300 ease-in-out ${
-                                      nextEntry.redirect ? "translate-x-6 bg-indigo-500" : "translate-x-0 bg-white"
-                                    }`}
+                                    className={`absolute left-0 w-6 h-6 rounded-full shadow transform transition-transform duration-300 ease-in-out ${nextEntry.redirect ? "translate-x-6 bg-indigo-500" : "translate-x-0 bg-white"
+                                      }`}
                                   ></div>
                                 </div>
                               </div>
@@ -677,8 +707,11 @@ export default function AdminPanel({ version, entries: initialEntries, userRoleI
         ) : (
           <div className="space-y-6">
             <h2 className="text-3xl font-semibold">CL Content</h2>
+            {process.env.NODE_ENV !== "production" && (
+              <div className="text-sm text-gray-600">Debug: roleID: {userRoleID || 'null'} — {getRoleName(userRoleID)}</div>
+            )}
             <div className="bg-white shadow-md rounded-lg p-6 h-full flex flex-wrap justify-center gap-4 transition-shadow duration-500 ease-in-out">
-              <div className="max-w-sm rounded-lg overflow-hidden shadow-lg bg-white m-4 relative hover:shadow-xl transition-shadow duration-500 ease-in-out cursor-pointer" style={{width: '100%', height: 'auto', minHeight: '300px'}} onClick={() => console.log("Curious Reader Web Player")}> {/* Reduced width for better visibility */}
+              <div className="max-w-sm rounded-lg overflow-hidden shadow-lg bg-white m-4 relative hover:shadow-xl transition-shadow duration-500 ease-in-out cursor-pointer" style={{ width: '100%', height: 'auto', minHeight: '300px' }} onClick={() => console.log("Curious Reader Web Player")}> {/* Reduced width for better visibility */}
                 <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" className="w-full h-full object-cover absolute">
                   <defs>
                     <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -688,8 +721,8 @@ export default function AdminPanel({ version, entries: initialEntries, userRoleI
                   </defs>
                   <rect width="100%" height="100%" fill="url(#gradient)" rx="10" />
                 </svg>
-                <div className="p-6 relative flex flex-col items-start justify-start" style={{height: 'auto', minHeight: '300px'}}> {/* Changed flex direction to column and alignment to start */}
-                  <div className="absolute bottom-0 left-0 bg-white bg-opacity-50 p-4 rounded-t-lg w-full flex items-start justify-center" style={{height: 'auto', minHeight: '100px'}}> {/* Changed position to bottom and adjusted styles */}
+                <div className="p-6 relative flex flex-col items-start justify-start" style={{ height: 'auto', minHeight: '300px' }}> {/* Changed flex direction to column and alignment to start */}
+                  <div className="absolute bottom-0 left-0 bg-white bg-opacity-50 p-4 rounded-t-lg w-full flex items-start justify-center" style={{ height: 'auto', minHeight: '100px' }}> {/* Changed position to bottom and adjusted styles */}
                     <h2 className="text-base font-medium text-gray-900 text-left">Curious Reader Web Player</h2> {/* Changed text alignment to left */}
                   </div>
                 </div>
@@ -704,7 +737,7 @@ export default function AdminPanel({ version, entries: initialEntries, userRoleI
                   </span>
                 </div>
               </div>
-              <div className="max-w-sm rounded-lg overflow-hidden shadow-lg bg-white m-4 relative hover:shadow-xl transition-shadow duration-500 ease-in-out cursor-pointer" style={{width: '100%', height: 'auto', minHeight: '300px'}} onClick={() => console.log("Assessment")}> {/* Reduced width for better visibility */}
+              <div className="max-w-sm rounded-lg overflow-hidden shadow-lg bg-white m-4 relative hover:shadow-xl transition-shadow duration-500 ease-in-out cursor-pointer" style={{ width: '100%', height: 'auto', minHeight: '300px' }} onClick={() => console.log("Assessment")}> {/* Reduced width for better visibility */}
                 <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" className="w-full h-full object-cover absolute">
                   <defs>
                     <linearGradient id="gradient2" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -714,8 +747,8 @@ export default function AdminPanel({ version, entries: initialEntries, userRoleI
                   </defs>
                   <rect width="100%" height="100%" fill="url(#gradient2)" rx="10" />
                 </svg>
-                <div className="p-6 relative flex flex-col items-start justify-start" style={{height: 'auto', minHeight: '300px'}}> {/* Changed flex direction to column and alignment to start */}
-                  <div className="absolute bottom-0 left-0 bg-white bg-opacity-50 p-4 rounded-t-lg w-full flex items-start justify-center" style={{height: 'auto', minHeight: '100px'}}> {/* Changed position to bottom and adjusted styles */}
+                <div className="p-6 relative flex flex-col items-start justify-start" style={{ height: 'auto', minHeight: '300px' }}> {/* Changed flex direction to column and alignment to start */}
+                  <div className="absolute bottom-0 left-0 bg-white bg-opacity-50 p-4 rounded-t-lg w-full flex items-start justify-center" style={{ height: 'auto', minHeight: '100px' }}> {/* Changed position to bottom and adjusted styles */}
                     <h2 className="text-base font-medium text-gray-900 text-left">Assessment</h2> {/* Changed text alignment to left */}
                   </div>
                 </div>
@@ -730,34 +763,36 @@ export default function AdminPanel({ version, entries: initialEntries, userRoleI
                   </span>
                 </div>
               </div>
-              <div className="max-w-sm rounded-lg overflow-hidden shadow-lg bg-white m-4 relative hover:shadow-xl transition-shadow duration-500 ease-in-out cursor-pointer" style={{width: '100%', height: 'auto', minHeight: '300px'}} onClick={() => console.log("Feed The Monster")}> {/* Reduced width for better visibility */}
-                <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" className="w-full h-full object-cover absolute">
-                  <defs>
-                    <linearGradient id="gradient3" x1="0%" y1="0%" x2="100%" y2="0%">
-                      <stop offset="0%" stop-color="#87ceeb" />
-                      <stop offset="100%" stop-color="#add8e6" />
-                    </linearGradient>
-                  </defs>
-                  <rect width="100%" height="100%" fill="url(#gradient3)" rx="10" />
-                </svg>
-                <div className="p-6 relative flex flex-col items-start justify-start" style={{height: 'auto', minHeight: '300px'}}> {/* Changed flex direction to column and alignment to start */}
-                  <div className="absolute bottom-0 left-0 bg-white bg-opacity-50 p-4 rounded-t-lg w-full flex items-start justify-center" style={{height: 'auto', minHeight: '100px'}}> {/* Changed position to bottom and adjusted styles */}
-                    <h2 className="text-base font-medium text-gray-900 text-left">Feed The Monster</h2> {/* Changed text alignment to left */}
+              {(userRoleID === "0" || userRoleID === "1") && (
+                <div className="max-w-sm rounded-lg overflow-hidden shadow-lg bg-white m-4 relative hover:shadow-xl transition-shadow duration-500 ease-in-out cursor-pointer" style={{ width: '100%', height: 'auto', minHeight: '300px' }} onClick={() => console.log("Feed The Monster")}> {/* Reduced width for better visibility */}
+                  <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" className="w-full h-full object-cover absolute">
+                    <defs>
+                      <linearGradient id="gradient3" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#87ceeb" />
+                        <stop offset="100%" stop-color="#add8e6" />
+                      </linearGradient>
+                    </defs>
+                    <rect width="100%" height="100%" fill="url(#gradient3)" rx="10" />
+                  </svg>
+                  <div className="p-6 relative flex flex-col items-start justify-start" style={{ height: 'auto', minHeight: '300px' }}> {/* Changed flex direction to column and alignment to start */}
+                    <div className="absolute bottom-0 left-0 bg-white bg-opacity-50 p-4 rounded-t-lg w-full flex items-start justify-center" style={{ height: 'auto', minHeight: '100px' }}> {/* Changed position to bottom and adjusted styles */}
+                      <h2 className="text-base font-medium text-gray-900 text-left">Feed The Monster</h2> {/* Changed text alignment to left */}
+                    </div>
+                  </div>
+                  <div className="flex justify-center mt-4 mb-4 absolute bottom-0 left-0 w-full">
+                    <span className="mr-2 bg-green-200 text-green-600 py-1 px-2 rounded flex items-center justify-center text-xs">
+                      dev
+                      <span className="ml-1 w-1 h-1 bg-green-500 rounded-full animate-pulse"></span>
+                    </span>
+                    <span className="mr-2 bg-green-200 text-green-600 py-1 px-2 rounded flex items-center justify-center text-xs">
+                      prod
+                      <span className="ml-1 w-1 h-1 bg-green-500 rounded-full animate-pulse"></span>
+                    </span>
                   </div>
                 </div>
-                <div className="flex justify-center mt-4 mb-4 absolute bottom-0 left-0 w-full">
-                  <span className="mr-2 bg-green-200 text-green-600 py-1 px-2 rounded flex items-center justify-center text-xs">
-                    dev
-                    <span className="ml-1 w-1 h-1 bg-green-500 rounded-full animate-pulse"></span>
-                  </span>
-                  <span className="mr-2 bg-green-200 text-green-600 py-1 px-2 rounded flex items-center justify-center text-xs">
-                    prod
-                    <span className="ml-1 w-1 h-1 bg-green-500 rounded-full animate-pulse"></span>
-                  </span>
-                </div>
-              </div>
+              )}
             </div>
-            </div>
+          </div>
         )
       }
     />
