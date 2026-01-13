@@ -2,5 +2,8 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/dashboard/app-content/feed-the-monster": "pages/dashboard/app-content/feed-the-monster.js"
+  "/dashboard/app-content/feed-the-monster": "pages/dashboard/app-content/feed-the-monster.js",
+  "/dashboard/users": "pages/dashboard/users.js",
+  "/dashboard": "pages/dashboard.js",
+  "/auth/signin": "pages/auth/signin.js"
 }

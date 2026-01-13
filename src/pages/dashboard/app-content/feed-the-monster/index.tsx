@@ -1,5 +1,5 @@
 import { GetServerSideProps } from "next";
-import { getSession, useSession } from "next-auth/react";
+import { getSession, useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/router";
 import { useState, useEffect } from "react";
 import SideBarLayout from "@/components/sidebar-layout";
@@ -14,7 +14,9 @@ import {
   Music,
   Loader2,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  ArrowRightLeft,
+  Shield
 } from "lucide-react";
 import getVersion from "@/utils/get-version";
 import { adminDB } from "@/config/firebaseAdmin";
@@ -39,7 +41,6 @@ export default function FeedTheMonsterPage({ version, userRoleID }: Props) {
   const router = useRouter();
   const [previewMode, setPreviewMode] = useState<"dev" | "prod">("dev");
   const [isClContentExpanded, setIsClContentExpanded] = useState(true);
-  const [currentlyToggledMainContent, setCurrentlyToggledMainContent] = useState<"app-flows" | "cl-content">("cl-content");
   const [selectedLanguage, setSelectedLanguage] = useState<string>("");
   // Language and Audio state
   const [languages, setLanguages] = useState<Language[]>([]);
@@ -138,8 +139,13 @@ export default function FeedTheMonsterPage({ version, userRoleID }: Props) {
     // TODO: Call Python API to send for approval
   };
 
-  const toggleMainContent = (content: string) => {
-    setCurrentlyToggledMainContent(content as "app-flows" | "cl-content");
+  const logOut = async () => {
+    try {
+      await signOut({ redirect: false });
+      router.push("/auth/signin");
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
   };
 
   const renderAudioList = () => {
@@ -233,15 +239,11 @@ export default function FeedTheMonsterPage({ version, userRoleID }: Props) {
               {userRoleID === "0" && (
                 <Link
                   href="/dashboard"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    toggleMainContent("app-flows");
-                  }}
-                  className={`block py-2 mb-2 px-3 rounded ${currentlyToggledMainContent === "app-flows" ? "bg-gray-500" : "bg-gray-700"
+                  className={`block py-2 mb-2 px-3 rounded ${router.pathname === "/dashboard" ? "bg-gray-500" : "bg-gray-700"
                     }`}
                 >
                   <div className="flex items-center">
-                    <Boxes size={20} className="mr-2" />
+                    <ArrowRightLeft size={20} className="mr-2" />
                     <span className="text-sm">App Flows</span>
                   </div>
                 </Link>
@@ -251,10 +253,9 @@ export default function FeedTheMonsterPage({ version, userRoleID }: Props) {
                   href="/dashboard"
                   onClick={(e) => {
                     e.preventDefault();
-                    toggleMainContent("cl-content");
                     setIsClContentExpanded(!isClContentExpanded);
                   }}
-                  className={`block py-2 mb-2 px-3 rounded ${currentlyToggledMainContent === "cl-content" ? "bg-gray-500" : "bg-gray-700"
+                  className={`block py-2 mb-2 px-3 rounded ${router.pathname.startsWith("/dashboard/app-content") ? "bg-gray-500" : "bg-gray-700"
                     }`}
                 >
                   <div className="flex items-center justify-between">
@@ -281,9 +282,27 @@ export default function FeedTheMonsterPage({ version, userRoleID }: Props) {
                   </Link>
                 )}
               </div>
+              {userRoleID === "0" && (
+                <Link
+                  href="/dashboard/users"
+                  className={`block py-2 mb-2 px-3 rounded ${router.pathname === "/dashboard/users" ? "bg-gray-500" : "bg-gray-700"
+                    }`}
+                >
+                  <div className="flex items-center">
+                    <Shield size={20} className="mr-2" />
+                    <span className="text-sm">Roles & Permissions</span>
+                  </div>
+                </Link>
+              )}
             </nav>
           </div>
           <div className="flex flex-col items-center justify-center">
+            <button
+              onClick={() => logOut()}
+              className="py-2 px-4 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors duration-300"
+            >
+              Log Out
+            </button>
             <p className="text-[10px] mt-4 text-center">Version: {version}</p>
           </div>
         </div>
@@ -310,7 +329,13 @@ export default function FeedTheMonsterPage({ version, userRoleID }: Props) {
                       <select
                         id="language-select"
                         value={selectedSheetId}
-                        onChange={(e) => setSelectedSheetId(e.target.value)}
+                        onChange={(e) => {
+                          const sheetId = e.target.value;
+                          setSelectedSheetId(sheetId);
+                          // Find the language name for the selected sheet ID
+                          const selectedLang = languages.find(lang => lang.id === sheetId);
+                          setSelectedLanguage(selectedLang?.name || "");
+                        }}
                         className="flex-1 px-3 py-2 border border-gray-300 rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         disabled={loadingLanguages}
                       >
@@ -320,7 +345,6 @@ export default function FeedTheMonsterPage({ version, userRoleID }: Props) {
                         {languages.map((language) => (
                           <option key={language.id} value={language.id}>
                             {language.name}
-                            setSelectedLanguage(language.name);
                           </option>
                         ))}
                       </select>
