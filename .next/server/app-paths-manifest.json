@@ -1,7 +1,5 @@
 {
-  "/manifest.json/route": "app/manifest.json/route.js",
-  "/page": "app/page.js",
-  "/favicon.ico/route": "app/favicon.ico/route.js",
-  "/api/roles/get-roles/route": "app/api/roles/get-roles/route.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/api/languages/route": "app/api/languages/route.js",
   "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js"
 }

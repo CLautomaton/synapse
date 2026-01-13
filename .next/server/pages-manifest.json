@@ -2,6 +2,5 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/dashboard": "pages/dashboard.js",
   "/dashboard/app-content/feed-the-monster": "pages/dashboard/app-content/feed-the-monster.js"
 }

@@ -1,19 +1,17 @@
 import { GetServerSideProps } from "next";
-import { getSession } from "next-auth/react";
-import { useSession } from "next-auth/react";
+import { getSession, useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import { useState, useEffect } from "react";
 import SideBarLayout from "@/components/sidebar-layout";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { 
-  Boxes, 
-  Upload, 
-  Trash2, 
-  Send, 
-  FileSpreadsheet, 
-  Music, 
+import {
+  Boxes,
+  Upload,
+  Trash2,
+  Send,
+  FileSpreadsheet,
+  Music,
   Loader2,
   ChevronDown,
   ChevronRight
@@ -22,17 +20,33 @@ import getVersion from "@/utils/get-version";
 import { adminDB } from "@/config/firebaseAdmin";
 
 interface Props {
-  version: string;
-  userRoleID: string | null;
+  readonly version: string;
+  readonly userRoleID: string | null;
+}
+
+interface Language {
+  id: string;
+  name: string;
+}
+
+interface Audio {
+  id: string;
+  name: string;
 }
 
 export default function FeedTheMonsterPage({ version, userRoleID }: Props) {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [previewMode, setPreviewMode] = useState<"dev" | "prod">("dev");
-  const [googleSheetUrl, setGoogleSheetUrl] = useState("");
   const [isClContentExpanded, setIsClContentExpanded] = useState(true);
   const [currentlyToggledMainContent, setCurrentlyToggledMainContent] = useState<"app-flows" | "cl-content">("cl-content");
+  const [selectedLanguage, setSelectedLanguage] = useState<string>("");
+  // Language and Audio state
+  const [languages, setLanguages] = useState<Language[]>([]);
+  const [selectedSheetId, setSelectedSheetId] = useState<string>("");
+  const [audios, setAudios] = useState<Audio[]>([]);
+  const [loadingLanguages, setLoadingLanguages] = useState(false);
+  const [loadingAudios, setLoadingAudios] = useState(false);
 
   // Feed The Monster preview URLs
   const FEED_THE_MONSTER_URLS = {
@@ -42,32 +56,81 @@ export default function FeedTheMonsterPage({ version, userRoleID }: Props) {
 
   useEffect(() => {
     if (status === "loading") return;
-    
+
     if (!session) {
       router.push("/auth/signin");
       return;
     }
+
+    // Fetch languages on page load
+    fetchLanguages();
   }, [status, session]);
+
+  // Fetch audios when a language is selected
+  useEffect(() => {
+    if (selectedSheetId) {
+      fetchAudios(selectedSheetId);
+    } else {
+      setAudios([]);
+    }
+  }, [selectedSheetId]);
+
+  const fetchLanguages = async () => {
+    setLoadingLanguages(true);
+    try {
+      const response = await fetch("/api/languages");
+      if (response.ok) {
+        const data = await response.json();
+        setLanguages(data.languages || []);
+      } else {
+        console.error("Failed to fetch languages");
+      }
+    } catch (error) {
+      console.error("Error fetching languages:", error);
+    } finally {
+      setLoadingLanguages(false);
+    }
+  };
+
+  const fetchAudios = async (sheetId: string) => {
+    setLoadingAudios(true);
+    try {
+      const response = await fetch(`/api/audios?sheetId=${encodeURIComponent(sheetId)}`);
+      if (response.ok) {
+        const data = await response.json();
+        setAudios(data.audios || []);
+      } else {
+        console.error("Failed to fetch audios");
+        setAudios([]);
+      }
+    } catch (error) {
+      console.error("Error fetching audios:", error);
+      setAudios([]);
+    } finally {
+      setLoadingAudios(false);
+    }
+  };
 
   // Mock functions for now (will be replaced with Python API calls)
   const handleLoadLanguageContent = () => {
-    console.log("Load language content from Google Sheet:", googleSheetUrl);
+    if (!selectedSheetId) return;
+    console.log("Load language content from Google Sheet:", selectedSheetId);
     // TODO: Call Python API to load content from Google Sheet
+    // This should use the selectedSheetId to load the content
   };
 
   const handleUploadAudio = () => {
-    console.log("Upload audio to drive folder");
+    if (!selectedSheetId) return;
+    console.log("Upload audio to drive folder for sheet:", selectedSheetId);
     // TODO: Call Python API to upload audio
-  };
-
-  const handleLoadAudios = () => {
-    console.log("Load audios from drive folder");
-    // TODO: Call Python API to load audios
+    // After upload, refresh the audio list by calling fetchAudios(selectedSheetId)
   };
 
   const handleRemoveAudio = (audioId: string) => {
-    console.log("Remove audio:", audioId);
+    if (!selectedSheetId) return;
+    console.log("Remove audio:", audioId, "from sheet:", selectedSheetId);
     // TODO: Call Python API to remove audio
+    // After removal, refresh the audio list by calling fetchAudios(selectedSheetId)
   };
 
   const handleSendForApproval = () => {
@@ -77,6 +140,52 @@ export default function FeedTheMonsterPage({ version, userRoleID }: Props) {
 
   const toggleMainContent = (content: string) => {
     setCurrentlyToggledMainContent(content as "app-flows" | "cl-content");
+  };
+
+  const renderAudioList = () => {
+    if (!selectedSheetId) {
+      return (
+        <p className="text-sm text-gray-500 text-center py-4">
+          Please select a language to view audio files
+        </p>
+      );
+    }
+    if (loadingAudios) {
+      return (
+        <div className="flex items-center justify-center py-4">
+          <Loader2 className="animate-spin" size={20} />
+          <span className="ml-2 text-sm text-gray-500">Loading audios...</span>
+        </div>
+      );
+    }
+    if (audios.length === 0) {
+      return (
+        <p className="text-sm text-gray-500 text-center py-4">
+          No audio files found for this language
+        </p>
+      );
+    }
+    return (
+      <div className="space-y-2">
+        {audios.map((audio) => (
+          <div
+            key={audio.id}
+            className="flex items-center justify-between p-2 bg-white rounded border border-gray-200 hover:bg-gray-50"
+          >
+            <span className="text-sm text-gray-700">{audio.name}</span>
+            <Button
+              onClick={() => handleRemoveAudio(audio.id)}
+              variant="outline"
+              size="sm"
+              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+            >
+              <Trash2 size={14} className="mr-1" />
+              Delete
+            </Button>
+          </div>
+        ))}
+      </div>
+    );
   };
 
   if (status === "loading") {
@@ -91,7 +200,15 @@ export default function FeedTheMonsterPage({ version, userRoleID }: Props) {
     return null;
   }
 
-  const previewURL = previewMode === "dev" ? FEED_THE_MONSTER_URLS.dev : FEED_THE_MONSTER_URLS.prod;
+  const baseURL =
+    previewMode === "dev"
+      ? FEED_THE_MONSTER_URLS.dev
+      : FEED_THE_MONSTER_URLS.prod;
+
+  const previewURL = selectedLanguage
+    ? `${baseURL}?cr_lang=${encodeURIComponent(selectedLanguage)}`
+    : baseURL;
+
 
   return (
     <SideBarLayout
@@ -120,9 +237,8 @@ export default function FeedTheMonsterPage({ version, userRoleID }: Props) {
                     e.preventDefault();
                     toggleMainContent("app-flows");
                   }}
-                  className={`block py-2 mb-2 px-3 rounded ${
-                    currentlyToggledMainContent === "app-flows" ? "bg-gray-500" : "bg-gray-700"
-                  }`}
+                  className={`block py-2 mb-2 px-3 rounded ${currentlyToggledMainContent === "app-flows" ? "bg-gray-500" : "bg-gray-700"
+                    }`}
                 >
                   <div className="flex items-center">
                     <Boxes size={20} className="mr-2" />
@@ -138,9 +254,8 @@ export default function FeedTheMonsterPage({ version, userRoleID }: Props) {
                     toggleMainContent("cl-content");
                     setIsClContentExpanded(!isClContentExpanded);
                   }}
-                  className={`block py-2 mb-2 px-3 rounded ${
-                    currentlyToggledMainContent === "cl-content" ? "bg-gray-500" : "bg-gray-700"
-                  }`}
+                  className={`block py-2 mb-2 px-3 rounded ${currentlyToggledMainContent === "cl-content" ? "bg-gray-500" : "bg-gray-700"
+                    }`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
@@ -157,9 +272,8 @@ export default function FeedTheMonsterPage({ version, userRoleID }: Props) {
                 {isClContentExpanded && (userRoleID === "0" || userRoleID === "1") && (
                   <Link
                     href="/dashboard/app-content/feed-the-monster"
-                    className={`block py-2 mb-2 px-3 rounded ml-6 ${
-                      router.pathname === "/dashboard/app-content/feed-the-monster" ? "bg-gray-500" : "bg-gray-700"
-                    }`}
+                    className={`block py-2 mb-2 px-3 rounded ml-6 ${router.pathname === "/dashboard/app-content/feed-the-monster" ? "bg-gray-500" : "bg-gray-700"
+                      }`}
                   >
                     <div className="flex items-center">
                       <span className="text-sm">Feed The Monster</span>
@@ -180,7 +294,7 @@ export default function FeedTheMonsterPage({ version, userRoleID }: Props) {
           <div className="w-1/2 flex flex-col gap-4">
             <div className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-2xl font-semibold mb-4">Feed The Monster - Content Editor</h2>
-              
+
               {/* Language Content Section */}
               <div className="mb-6 border-b pb-6">
                 <div className="flex items-center mb-4">
@@ -189,18 +303,31 @@ export default function FeedTheMonsterPage({ version, userRoleID }: Props) {
                 </div>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Google Sheet URL
+                    <label htmlFor="language-select" className="block text-sm font-medium text-gray-700 mb-2">
+                      Select Language
                     </label>
                     <div className="flex gap-2">
-                      <Input
-                        type="url"
-                        placeholder="https://docs.google.com/spreadsheets/d/..."
-                        value={googleSheetUrl}
-                        onChange={(e) => setGoogleSheetUrl(e.target.value)}
-                        className="flex-1"
-                      />
-                      <Button onClick={handleLoadLanguageContent}>
+                      <select
+                        id="language-select"
+                        value={selectedSheetId}
+                        onChange={(e) => setSelectedSheetId(e.target.value)}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        disabled={loadingLanguages}
+                      >
+                        <option value="">
+                          {loadingLanguages ? "Loading languages..." : "Select a language..."}
+                        </option>
+                        {languages.map((language) => (
+                          <option key={language.id} value={language.id}>
+                            {language.name}
+                            setSelectedLanguage(language.name);
+                          </option>
+                        ))}
+                      </select>
+                      <Button
+                        onClick={handleLoadLanguageContent}
+                        disabled={!selectedSheetId}
+                      >
                         Load Content
                       </Button>
                     </div>
@@ -216,17 +343,17 @@ export default function FeedTheMonsterPage({ version, userRoleID }: Props) {
                 </div>
                 <div className="space-y-4">
                   <div className="flex gap-2">
-                    <Button onClick={handleLoadAudios} variant="outline" className="flex-1">
-                      Load Audios
-                    </Button>
-                    <Button onClick={handleUploadAudio} className="flex-1">
+                    <Button
+                      onClick={handleUploadAudio}
+                      className="flex-1"
+                      disabled={!selectedSheetId}
+                    >
                       <Upload size={16} className="mr-2" />
                       Upload Audio
                     </Button>
                   </div>
                   <div className="border rounded-lg p-4 bg-gray-50 min-h-[100px]">
-                    <p className="text-sm text-gray-500">Audio files will appear here</p>
-                    {/* TODO: Display audio list when API is ready */}
+                    {renderAudioList()}
                   </div>
                 </div>
               </div>
