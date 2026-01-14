@@ -12,7 +12,7 @@ import { useState } from 'react';
 import { getSession } from 'next-auth/react';
 
 const schema = z.object({
-  username: z.string().min(1, "Username is required"),
+  email: z.string().email("Invalid email address"),
   password: z.string().min(1, "Password is required")
 });
 
@@ -20,16 +20,17 @@ type SignInFormData = z.infer<typeof schema>;
 
 interface SignInProps {
   csrfToken: string | undefined;
+  registered?: boolean;
 }
 
-export default function SignIn({ csrfToken }: SignInProps) {
+export default function SignIn({ csrfToken, registered }: SignInProps) {
   const [authError, setAuthError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<SignInFormData>({
     resolver: zodResolver(schema),
     defaultValues: {
-      username: "",
+      email: "",
       password: "",
     },
   });
@@ -39,7 +40,7 @@ export default function SignIn({ csrfToken }: SignInProps) {
     // Handle form submission
     const result = await signIn('credentials', {
       redirect: false,
-      username: data.username,
+      email: data.email,
       password: data.password,
     });
 
@@ -55,19 +56,22 @@ export default function SignIn({ csrfToken }: SignInProps) {
     <div className="flex items-center flex-col justify-center min-h-screen bg-gray-100">
       <div className="p-4 m-14 bg-white rounded-xl shadow-md w-full max-w-sm">
         <h1 className="text-xl font-semibold text-center">Sign in to your Curious Frame account</h1>
+        <p className="text-center text-sm mt-2">New here? <a href="/auth/signup" className="text-blue-600">Sign up</a></p>
+        {registered && <p className="text-center text-sm mt-2 text-green-600">Account created — please sign in.</p>}
       </div>
       <Form {...form} >
-        <form onSubmit={(e) => { e.preventDefault(); form.handleSubmit(onSubmit)()}} className='inline-block'>
+        <form onSubmit={(e) => { e.preventDefault(); form.handleSubmit(onSubmit)() }} className='inline-block'>
           <FormField
             control={form.control}
-            name="username"
+            name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel htmlFor="username">Username</FormLabel>
+                <FormLabel htmlFor="email">Email</FormLabel>
                 <FormControl>
                   <Input
-                    id="username"
-                    placeholder="Username"
+                    id="email"
+                    type="email"
+                    placeholder="Email"
                     {...field}
                     className='min-w-96'
                   />
@@ -97,7 +101,7 @@ export default function SignIn({ csrfToken }: SignInProps) {
               </FormItem>
             )}
           />
-          <Button type="submit" style={{marginTop: 12}}>
+          <Button type="submit" style={{ marginTop: 12 }}>
             {isLoading ? <Loader2 className="animate-spin" /> : 'Submit'}
           </Button>
           {authError && <p className="text-red-500">{authError}</p>}
@@ -113,16 +117,18 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   if (session) {
     return {
       redirect: {
-        destination: '/dashboard', 
+        destination: '/dashboard',
         permanent: false,
       },
     };
   }
 
   const csrfToken = await getCsrfToken(context);
+  const registered = context.query?.registered === '1' || context.query?.registered === 'true';
   return {
     props: {
       csrfToken: csrfToken ?? null,
+      registered: registered ?? false,
     },
   };
 };
