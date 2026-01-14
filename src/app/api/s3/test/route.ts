@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
-import { adminDB } from '@/config/firebaseAdmin';
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../auth/auth.config";
-import { AppsList, App } from '@/types/app';
+import { testS3Connection } from '@/lib/clDataApi';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,18 +16,21 @@ export async function GET() {
       );
     }
 
-    // Fetch all apps
-    const appsSnapshot = await adminDB.collection('apps').get();
-    const apps: AppsList = appsSnapshot.docs.map(doc => ({
-      appID: doc.id,
-      ...doc.data() as Omit<App, 'appID'>,
-    }));
+    const userId = session.user?.id;
+    if (!userId) {
+      return NextResponse.json(
+        { error: "User ID not found" },
+        { status: 401 }
+      );
+    }
 
-    return NextResponse.json({ apps });
-  } catch (error) {
-    console.error('Error fetching apps:', error);
+    const data = await testS3Connection();
+    
+    return NextResponse.json(data);
+  } catch (error: any) {
+    console.error('Error testing S3 connection:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch apps' },
+      { error: error.message || 'Failed to test S3 connection' },
       { status: 500 }
     );
   }
